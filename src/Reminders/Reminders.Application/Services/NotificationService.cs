@@ -99,7 +99,7 @@ public class NotificationService : INotificationService
         await _redis.ProcessMessageAsync(new NotificationWrapper
         {
             NotificationId = notification.Id,
-            MessageType = MessageTypes.Add
+            MessageType = MessageTypes.Delete
         });
 
         await _notificationRepository.DeleteNotificationAsync(notification);
