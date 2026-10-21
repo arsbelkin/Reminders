@@ -63,9 +63,14 @@ public class CategoriesController : Controller
     [HttpPatch("{categoryId:guid}")]
     public async Task<ActionResult> UpdateCategory(Guid categoryId, [FromBody] CategoryRequestDTO dto)
     {
+        var userEmail = User.FindFirstValue(ClaimTypes.Email);
+        
         var updateDto = _mapper.Map<CategoryUpdateDTO>(dto);
         updateDto.UserId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
         updateDto.Id = categoryId;
+        
+        if (!updateDto.UsersEmails.Contains(userEmail))
+            updateDto.UsersEmails.Add(userEmail);
 
         await _categoryService.UpdateCategoryAsync(updateDto);
 
