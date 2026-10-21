@@ -40,11 +40,11 @@ public class ReminderService : IReminderService
         {
             if (!EmailValidator.IsValid(email))
                 throw new NotValidEmailException(email);
-
-            if (!await _userRepository.CheckUserByEmailAsync(email))
-                throw new NotValidEmailException(email);
-
+            
             if (!await _categoryRepository.CheckCategoryByIdAsync(dto.CategoryId))
+                throw new NotValidCategoryException();
+            
+            if (!await _categoryRepository.CheckMemberAsync(dto.CreatorId, dto.CategoryId))
                 throw new NotValidCategoryException();
         }
 

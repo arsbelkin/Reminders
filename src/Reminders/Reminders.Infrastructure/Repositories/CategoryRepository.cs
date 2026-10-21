@@ -30,7 +30,7 @@ public class CategoryRepository : ICategoryRepository
 
         return categories;
     }
-    
+
     public async Task<CategoryInfoViewDTO?> GetCategoryInfoAsync(Guid userId, Guid categoryId)
     {
         var categoryInfo = await _dbContext.Categories
@@ -86,5 +86,10 @@ public class CategoryRepository : ICategoryRepository
             query = query.Where(c => c.Id == categoryId);
 
         return query.Select(c => c.Id);
+    }
+
+    public async Task<bool> CheckMemberAsync(Guid userId, Guid categoryId)
+    {
+        return await _dbContext.Categories.AnyAsync(c => c.Id == categoryId && c.Members.Any(m => m.Id == userId));
     }
 }

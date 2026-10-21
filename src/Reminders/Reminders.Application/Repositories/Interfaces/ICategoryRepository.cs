@@ -16,4 +16,6 @@ public interface ICategoryRepository
     public Task DeleteCategoryAsync(Category category);
     public Task<bool> CheckCategoryByIdAsync(Guid categoryId);
     public IQueryable<Guid> CreateCategoryQuery(string? categoryName, Guid? categoryId);
+    
+    public Task<bool> CheckMemberAsync(Guid userId, Guid categoryId);
 }
