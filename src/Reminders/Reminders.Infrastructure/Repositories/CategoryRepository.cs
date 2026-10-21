@@ -21,21 +21,6 @@ public class CategoryRepository : ICategoryRepository
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task<List<Category>> GetUserCategoriesAsync(
-        IQueryable<Guid> userRemindersQuery,
-        IQueryable<Guid> userCategoriesQuery,
-        Guid userId
-    )
-    {
-        var categories = await _dbContext.Categories
-            .Where(c => c.CreatorId == userId 
-                        || userRemindersQuery.Contains(c.Id))
-            .Where(c => userCategoriesQuery.Contains(c.Id))
-            .ToListAsync();
-
-        return categories;
-    }
-
     public async Task<List<Category>> GetUserCategoriesAsync(IQueryable<Guid> userCategoriesQuery, Guid userId)
     {
         var categories = await _dbContext.Categories
