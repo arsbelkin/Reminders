@@ -123,6 +123,7 @@ public class ReminderRepository : IReminderRepository
     public async Task<Reminder?> GetReminderAsync(Guid reminderId, Guid userId)
     {
         return await _dbContext.Reminders
+            .Include(r => r.Members)
             .FirstOrDefaultAsync(r => r.Id == reminderId
                                       && r.Members.Any(m => m.Id == userId));
     }
@@ -144,5 +145,22 @@ public class ReminderRepository : IReminderRepository
         return await _dbContext.Reminders
             .AnyAsync(r => (r.Id == reminderId)
                 && (r.Members.Any(m => m.Id == userId)));
+    }
+    
+    public async Task<List<Guid>> UpdateReminderWithMembersAsync(
+        Reminder reminder,
+        List<Guid> removedMemberIds)
+    {
+        var notifications = await _dbContext.Notifications
+            .Where(n => n.ReminderId == reminder.Id &&
+                        removedMemberIds.Contains(n.ReceiverId))
+            .ToListAsync();
+
+        _dbContext.Notifications.RemoveRange(notifications);
+        _dbContext.Reminders.Update(reminder);
+
+        await _dbContext.SaveChangesAsync();
+
+        return notifications.Select(n => n.Id).ToList();
     }
 }

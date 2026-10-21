@@ -15,4 +15,5 @@ public interface IReminderRepository
     public Task UpdateReminderAsync(Reminder reminder);
     public Task DeleteReminderAsync(Reminder reminder);
     public Task<bool> CheckUserReminderByIdAsync(Guid reminderId, Guid userId);
+    public Task<List<Guid>> UpdateReminderWithMembersAsync(Reminder reminder, List<Guid> removedMemberIds);
 }

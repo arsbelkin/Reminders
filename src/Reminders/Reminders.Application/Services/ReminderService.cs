@@ -97,29 +97,56 @@ public class ReminderService : IReminderService
         return reminders;
     }
 
-    public async Task UpdateReminderAsync(Guid reminderId, Guid userId, ReminderUpdateDTO dto)
+    public async Task UpdateReminderAsync(Guid reminderId, Guid userId, ReminderRequestDTO dto) 
     {
         var reminder = await _reminderRepository.GetReminderAsync(reminderId, userId);
 
-        if (reminder == null)
+        if (reminder == null || reminder.CreatorId != userId)
             throw new NotValidReminderException();
-        
-        if (reminder.CreatorId != userId)
-            throw new NotValidReminderException();
-        
-        if (!await _categoryRepository.CheckMemberAsync(userId, dto.CategoryId))
-            throw new NotValidCategoryException();
+
+        foreach (var email in dto.UsersEmails)
+        {
+            if (!EmailValidator.IsValid(email))
+                throw new NotValidEmailException(email);
+
+            if (!await _categoryRepository.CheckMemberByEmailAsync(email, dto.CategoryId))
+            {
+                throw new NotValidCategoryException();
+            }
+        }
+
+        var users = await _userRepository.GetAllUsersByEmailAsync(dto.UsersEmails);
+
+        var newMemberIds = users
+            .Select(u => u.Id)
+            .ToHashSet();
+
+        var removedMemberIds = reminder.Members
+            .Where(u => !newMemberIds.Contains(u.Id))
+            .Select(u => u.Id)
+            .ToList();
 
         reminder.CategoryId = dto.CategoryId;
         reminder.Title = dto.Title;
         reminder.Description = dto.Description;
         reminder.Priority = dto.Priority;
         reminder.DueDate = dto.DueDate;
-        
-        await _reminderRepository.UpdateReminderAsync(reminder);
-        
+        reminder.Members = users;
+
+        var deletedNotificationIds =
+            await _reminderRepository.UpdateReminderWithMembersAsync(reminder, removedMemberIds);
+
+        foreach (var notificationId in deletedNotificationIds)
+        {
+            await _redis.ProcessMessageAsync(new NotificationWrapper
+            {
+                MessageType = MessageTypes.Delete,
+                NotificationId = notificationId
+            });
+        }
+
         var processedNotifications =
-            await _notificationRepository.GetNotificationsByReminderAsync(reminderId, 
+            await _notificationRepository.GetNotificationsByReminderAsync(reminderId,
                 ProcessedStatusTypes.Processed);
 
         await _redis.UpdateNotificationsListAsync(processedNotifications);

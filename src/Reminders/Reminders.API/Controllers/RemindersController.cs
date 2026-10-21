@@ -67,9 +67,15 @@ public class RemindersController : Controller
     }
 
     [HttpPatch("{reminderId:guid}")]
-    public async Task<ActionResult> UpdateReminder(Guid reminderId, [FromBody] ReminderUpdateDTO dto)
+    public async Task<ActionResult> UpdateReminder(Guid reminderId, [FromBody] ReminderRequestDTO dto)
     {
+        var userEmail = User.FindFirstValue(ClaimTypes.Email);
+        
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        
+        if (!dto.UsersEmails.Contains(userEmail))
+            dto.UsersEmails.Add(userEmail);
+        
         await _reminderService.UpdateReminderAsync(reminderId, userId, dto);
         
         return Ok(new {message = "Reminder updated successfully"});
