@@ -36,6 +36,16 @@ public class CategoryRepository : ICategoryRepository
         return categories;
     }
 
+    public async Task<List<Category>> GetUserCategoriesAsync(IQueryable<Guid> userCategoriesQuery, Guid userId)
+    {
+        var categories = await _dbContext.Categories
+            .Where(c => c.Members.Any(m => m.Id == userId))
+            .Where(c => userCategoriesQuery.Contains(c.Id))
+            .ToListAsync();
+
+        return categories;
+    }
+
     public async Task<CategoryInfoViewDTO?> GetCategoryInfoAsync(Guid userId, Guid categoryId,
         IQueryable<Guid> userRemindersQuery)
     {

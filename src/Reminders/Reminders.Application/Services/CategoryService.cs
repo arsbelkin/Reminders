@@ -34,7 +34,7 @@ public class CategoryService : ICategoryService
         _reminderRepository = reminderRepository;
         _notificationRepository = notificationRepository;
         _redis = redis;
-        _userRepository =  userRepository;
+        _userRepository = userRepository;
     }
 
     public async Task<Guid> CreateCategoryAsync(CategoryCreateDTO dto)
@@ -49,7 +49,7 @@ public class CategoryService : ICategoryService
         }
 
         var users = await _userRepository.GetAllUsersByEmailAsync(dto.UsersEmails);
-        
+
         var category = new Category
         {
             Id = Guid.CreateVersion7(),
@@ -70,11 +70,9 @@ public class CategoryService : ICategoryService
         Guid? categoryId
     )
     {
-        var userRemindersQuery = _reminderRepository.GetRemindersByUserIdQuery(userId);
         var userCategoriesQuery = _categoryRepository.CreateCategoryQuery(categoryName, categoryId);
 
         var userCategories = await _categoryRepository.GetUserCategoriesAsync(
-            userRemindersQuery,
             userCategoriesQuery,
             userId);
 
@@ -107,11 +105,11 @@ public class CategoryService : ICategoryService
             cat.Title = dto.Title;
 
         cat.Description = dto.Description;
-        
+
         await _categoryRepository.UpdateCategoryAsync(cat);
-        
+
         var processedNotifications =
-            await _notificationRepository.GetNotificationsByCategoryAsync(cat.Id, 
+            await _notificationRepository.GetNotificationsByCategoryAsync(cat.Id,
                 ProcessedStatusTypes.Processed);
 
         await _redis.UpdateNotificationsListAsync(processedNotifications);
@@ -126,11 +124,11 @@ public class CategoryService : ICategoryService
 
         if (dto.CreatorId != cat.CreatorId)
             throw new NotValidCategoryException();
-        
+
         var processedNotifications =
-            await _notificationRepository.GetNotificationsByCategoryAsync(cat.Id, 
+            await _notificationRepository.GetNotificationsByCategoryAsync(cat.Id,
                 ProcessedStatusTypes.Processed);
-        
+
         foreach (var notification in processedNotifications)
         {
             await _redis.ProcessMessageAsync(new NotificationWrapper

@@ -13,6 +13,8 @@ public interface ICategoryRepository
         Guid userId
     );
 
+    public Task<List<Category>> GetUserCategoriesAsync(IQueryable<Guid> userCategoriesQuery, Guid userId);
+
     public Task<CategoryInfoViewDTO?> GetCategoryInfoAsync(
         Guid userId,
         Guid categoryId,
