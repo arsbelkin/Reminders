@@ -17,4 +17,6 @@ public class Category
     public DateTime CreatedTime { get; set; }
     
     public User Creator { get; set; }
+    
+    public ICollection<User> Members { get; set; } = new List<User>();
 }

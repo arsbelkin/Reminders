@@ -22,6 +22,21 @@ namespace Reminders.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("CategoryUser", b =>
+                {
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("MembersId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("CategoryId", "MembersId");
+
+                    b.HasIndex("MembersId");
+
+                    b.ToTable("CategoryMembers", (string)null);
+                });
+
             modelBuilder.Entity("ReminderUser", b =>
                 {
                     b.Property<Guid>("MembersId")
@@ -210,6 +225,21 @@ namespace Reminders.Infrastructure.Migrations
                         {
                             t.HasComment("Пользователи");
                         });
+                });
+
+            modelBuilder.Entity("CategoryUser", b =>
+                {
+                    b.HasOne("Reminders.Domain.Models.Category", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Reminders.Domain.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("MembersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ReminderUser", b =>

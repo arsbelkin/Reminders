@@ -62,6 +62,10 @@ public class RemindersContext : DbContext
             .WithMany()
             .HasForeignKey(c => c.CreatorId)
             .OnDelete(DeleteBehavior.Restrict);
+        
+        categoryEntity.HasMany(c => c.Members)
+            .WithMany()
+            .UsingEntity(j => j.ToTable("CategoryMembers"));
     }
     
     private static void SetupReminders(ModelBuilder modelBuilder)
