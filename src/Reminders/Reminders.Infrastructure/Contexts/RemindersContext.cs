@@ -36,6 +36,7 @@ public class RemindersContext : DbContext
         userEntity.ToTable("Users", u => u.HasComment("Пользователи"));
 
         userEntity.HasIndex(u => u.Username).IsUnique();
+        userEntity.HasIndex(u => u.Email).IsUnique();
 
         userEntity.Property(u => u.Id).HasComment("Id").IsRequired();
         userEntity.Property(u => u.Email).HasComment("email").IsRequired();
