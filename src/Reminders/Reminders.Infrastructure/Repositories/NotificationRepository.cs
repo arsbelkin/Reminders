@@ -93,14 +93,16 @@ public class NotificationRepository : INotificationRepository
                 s.SetProperty(n => n.IsProcessed, ProcessedStatusTypes.NotProcessed));
     }
 
-    public async Task<List<Notification>> GetNotificationsByReminderAsync(Guid reminderId, ProcessedStatusTypes status)
+    public async Task<List<Notification>> GetNotificationsByReminderAsync(
+        Guid reminderId,
+        ProcessedStatusTypes status)
     {
-        var res = await _dbContext.Notifications
-            .Where(n => n.Reminder.Id == reminderId)
-            .Where(n => n.IsProcessed == status)
+        return await _dbContext.Notifications
+            .Where(n => n.ReminderId == reminderId && n.IsProcessed == status)
+            .Include(n => n.Receiver)
+            .Include(n => n.Reminder)
+            .ThenInclude(r => r.Category)
             .ToListAsync();
-
-        return res;
     }
 
     public async Task DeleteNotificationByReminderIdAsync(Guid reminderId)
@@ -110,15 +112,17 @@ public class NotificationRepository : INotificationRepository
             .ExecuteDeleteAsync();
     }
 
-    public async Task<List<Notification>> GetNotificationsByCategoryAsync(Guid categoryId,
+    public async Task<List<Notification>> GetNotificationsByCategoryAsync(
+        Guid categoryId,
         ProcessedStatusTypes status)
     {
-        var res = await _dbContext.Notifications
-            .Where(n => n.Reminder.CategoryId == categoryId)
-            .Where(n => n.IsProcessed == status)
+        return await _dbContext.Notifications
+            .Where(n => n.Reminder.CategoryId == categoryId &&
+                        n.IsProcessed == status)
+            .Include(n => n.Receiver)
+            .Include(n => n.Reminder)
+            .ThenInclude(r => r.Category)
             .ToListAsync();
-
-        return res;
     }
 
     public async Task DeleteNotificationByCategoryIdAsync(Guid categoryId)

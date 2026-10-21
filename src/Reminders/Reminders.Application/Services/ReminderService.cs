@@ -110,13 +110,13 @@ public class ReminderService : IReminderService
         reminder.Priority = dto.Priority;
         reminder.DueDate = dto.DueDate;
         
+        await _reminderRepository.UpdateReminderAsync(reminder);
+        
         var processedNotifications =
             await _notificationRepository.GetNotificationsByReminderAsync(reminderId, 
                 ProcessedStatusTypes.Processed);
 
         await _redis.UpdateNotificationsListAsync(processedNotifications);
-
-        await _reminderRepository.UpdateReminderAsync(reminder);
     }
 
     public async Task DeleteReminderAsync(Guid reminderId, Guid userId)
