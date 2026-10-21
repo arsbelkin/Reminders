@@ -137,4 +137,11 @@ public class NotificationRepository : INotificationRepository
         _dbContext.Notifications.Update(notification);
         await _dbContext.SaveChangesAsync();
     }
+    
+    public async Task<bool> CanSendNotificationAsync(Guid notificationId)
+    {
+        return await _dbContext.Notifications.AnyAsync(
+            n => n.Id == notificationId &&
+                 n.Reminder.Members.Any(m => m.Id == n.ReceiverId));
+    }
 }

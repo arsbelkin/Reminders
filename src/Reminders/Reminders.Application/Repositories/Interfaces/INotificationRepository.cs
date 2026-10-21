@@ -31,4 +31,6 @@ public interface INotificationRepository
     public Task DeleteNotificationByCategoryIdAsync(Guid categoryId);
     
     public Task UpdateNotificationAsync(Notification notification);
+
+    public Task<bool> CanSendNotificationAsync(Guid notificationId);
 }

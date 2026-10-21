@@ -59,6 +59,19 @@ public class Worker : BackgroundService
 
             try
             {
+                var canSend = await notificationRepository.CanSendNotificationAsync(readyMessage.NotificationId);
+
+                if (!canSend)
+                {
+                    await redis.ProcessMessageAsync(new NotificationWrapper
+                    {
+                        MessageType = MessageTypes.Delete,
+                        NotificationId = readyMessage.NotificationId
+                    });
+
+                    continue;
+                }
+                
                 await emailSenderService.SendEmailAsync(readyMessage);
                 await redis.ProcessMessageAsync(new NotificationWrapper
                 {
