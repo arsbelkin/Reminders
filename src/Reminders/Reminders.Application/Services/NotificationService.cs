@@ -115,7 +115,7 @@ public class NotificationService : INotificationService
         notification.NotificationTime = dto.NotificationTime;
         notification.Recurrency = dto.Recurrency;
         
-        var now = DateTime.Now;
+        var now = DateTime.UtcNow;
 
         var nextHour = new DateTime(
             now.Year,
