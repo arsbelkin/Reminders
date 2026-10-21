@@ -13,4 +13,6 @@ public class CategoryInfoViewDTO
     public string? Description { get; set; }
     
     public DateTime CreatedTime { get; set; }
+    
+    public List<string> UsersEmails { get; set; } = new List<string>();
 }

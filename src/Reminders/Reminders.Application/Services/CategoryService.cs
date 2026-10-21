@@ -81,9 +81,7 @@ public class CategoryService : ICategoryService
 
     public async Task<CategoryInfoViewDTO> GetCategoryInfoAsync(Guid categoryId, Guid userId)
     {
-        var userRemindersQuery = _reminderRepository.GetRemindersByUserIdQuery(userId);
-
-        var categoryInfo = await _categoryRepository.GetCategoryInfoAsync(userId, categoryId, userRemindersQuery);
+        var categoryInfo = await _categoryRepository.GetCategoryInfoAsync(userId, categoryId);
 
         if (categoryInfo == null)
             throw new NotValidCategoryException();

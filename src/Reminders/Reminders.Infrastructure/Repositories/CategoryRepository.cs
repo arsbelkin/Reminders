@@ -30,13 +30,12 @@ public class CategoryRepository : ICategoryRepository
 
         return categories;
     }
-
-    public async Task<CategoryInfoViewDTO?> GetCategoryInfoAsync(Guid userId, Guid categoryId,
-        IQueryable<Guid> userRemindersQuery)
+    
+    public async Task<CategoryInfoViewDTO?> GetCategoryInfoAsync(Guid userId, Guid categoryId)
     {
         var categoryInfo = await _dbContext.Categories
             .Where(c => c.Id == categoryId)
-            .Where(c => c.CreatorId == userId || userRemindersQuery.Contains(c.Id))
+            .Where(c => c.Members.Any(m => m.Id == userId))
             .Select(c => new CategoryInfoViewDTO
             {
                 Id = c.Id,
@@ -44,7 +43,8 @@ public class CategoryRepository : ICategoryRepository
                 Title = c.Title,
                 CreatorEmail = _dbContext.Users.Where(u => u.Id == c.CreatorId).Select(u => u.Email).FirstOrDefault(),
                 Description = c.Description,
-                CreatedTime = c.CreatedTime
+                CreatedTime = c.CreatedTime,
+                UsersEmails = c.Members.Select(m => m.Email).Distinct().ToList()
             })
             .FirstOrDefaultAsync();
 

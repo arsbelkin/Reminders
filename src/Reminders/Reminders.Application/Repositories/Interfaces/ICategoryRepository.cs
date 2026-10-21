@@ -9,11 +9,7 @@ public interface ICategoryRepository
 
     public Task<List<Category>> GetUserCategoriesAsync(IQueryable<Guid> userCategoriesQuery, Guid userId);
 
-    public Task<CategoryInfoViewDTO?> GetCategoryInfoAsync(
-        Guid userId,
-        Guid categoryId,
-        IQueryable<Guid> userRemindersQuery
-    );
+    public Task<CategoryInfoViewDTO?> GetCategoryInfoAsync(Guid userId, Guid categoryId);
 
     public Task<Category?> GetCategoryByIdAsync(Guid categoryId);
     public Task UpdateCategoryAsync(Category category);
