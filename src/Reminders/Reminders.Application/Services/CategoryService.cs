@@ -96,13 +96,26 @@ public class CategoryService : ICategoryService
         if (cat == null)
             throw new NotValidCategoryException();
 
-        if (dto.CreatorId != cat.CreatorId)
+        if (dto.UserId != cat.CreatorId)
             throw new NotValidCategoryException();
 
         if (dto.Title is not null)
             cat.Title = dto.Title;
 
         cat.Description = dto.Description;
+        
+        foreach (var email in dto.UsersEmails)
+        {
+            if (!EmailValidator.IsValid(email))
+                throw new NotValidEmailException(email);
+
+            if (!await _userRepository.CheckUserByEmailAsync(email))
+                throw new NotValidEmailException(email);
+        }
+
+        var users = await _userRepository.GetAllUsersByEmailAsync(dto.UsersEmails);
+
+        cat.Members = users;
 
         await _categoryRepository.UpdateCategoryAsync(cat);
 
@@ -120,7 +133,7 @@ public class CategoryService : ICategoryService
         if (cat == null)
             throw new NotValidCategoryException();
 
-        if (dto.CreatorId != cat.CreatorId)
+        if (dto.UserId != cat.CreatorId)
             throw new NotValidCategoryException();
 
         var processedNotifications =

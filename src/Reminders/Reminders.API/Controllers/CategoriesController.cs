@@ -64,7 +64,7 @@ public class CategoriesController : Controller
     public async Task<ActionResult> UpdateCategory(Guid categoryId, [FromBody] CategoryRequestDTO dto)
     {
         var updateDto = _mapper.Map<CategoryUpdateDTO>(dto);
-        updateDto.CreatorId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        updateDto.UserId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
         updateDto.Id = categoryId;
 
         await _categoryService.UpdateCategoryAsync(updateDto);
@@ -78,7 +78,7 @@ public class CategoriesController : Controller
         var deleteDto = new CategoryDeleteDTO
         {
             Id = categoryId,
-            CreatorId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier))
+            UserId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier))
         };
 
         await _categoryService.DeleteCategoryAsync(deleteDto);
