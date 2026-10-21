@@ -25,16 +25,16 @@ public class Notification
         switch (Recurrency)
         {
             case RecurrencyTypes.Daily:
-                NotificationTime = DateTime.UtcNow.AddDays(1);
+                NotificationTime = NotificationTime.AddDays(1);
                 break;
             case RecurrencyTypes.Monthly:
-                NotificationTime = DateTime.UtcNow.AddMonths(1);
+                NotificationTime = NotificationTime.AddMonths(1);
                 break;
             case RecurrencyTypes.Weekly:
-                NotificationTime = DateTime.UtcNow.AddDays(7);
+                NotificationTime = NotificationTime.AddDays(7);
                 break;
             case RecurrencyTypes.Yearly:
-                NotificationTime = DateTime.UtcNow.AddYears(1);
+                NotificationTime = NotificationTime.AddYears(1);
                 break;
             default:
                 break;
