@@ -1,5 +1,7 @@
+using Reminders.Application.Enums;
 using Reminders.Application.Repositories.Interfaces;
 using Reminders.Application.Services.Interfaces;
+using Reminders.Application.TransferModels.Notification;
 
 namespace Reminders.NotificationSenderWorker;
 
@@ -45,6 +47,8 @@ public class Worker : BackgroundService
         var nowSeconds = DateTimeOffset.Now.ToUnixTimeSeconds();
         
         var readyMessages = await redis.GetReadyNotificationsAsync(nowSeconds);
+        
+        var notificationsIds = new List<Guid>();
 
         foreach (var readyMessage in readyMessages)
         {
@@ -53,14 +57,26 @@ public class Worker : BackgroundService
                 _logger.LogInformation($"{readyMessage.ReceiverEmail}");
             }
 
-            await emailSenderService.SendEmailAsync(readyMessage);
+            try
+            {
+                await emailSenderService.SendEmailAsync(readyMessage);
+                await redis.ProcessMessageAsync(new NotificationWrapper
+                {
+                    MessageType = MessageTypes.Delete,
+                    NotificationId = readyMessage.NotificationId
+                });
+                
+                notificationsIds.Add(readyMessage.NotificationId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
         }
 
         if (readyMessages.Count > 0)
         {
-            var notificationsId = readyMessages.Select(n => n.NotificationId).ToList();
-            
-            await notificationRepository.SetNotProcessedNotificationsByListIdAsync(notificationsId);
+            await notificationRepository.SetNotProcessedNotificationsByListIdAsync(notificationsIds);
         }
     }
 }

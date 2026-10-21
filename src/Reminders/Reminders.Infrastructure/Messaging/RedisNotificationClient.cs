@@ -88,9 +88,6 @@ public class RedisNotificationClient : IRedisNotification
                 if (message != null)
                     res.Add(message);
             }
-
-            await _redis.SortedSetRemoveAsync(QueueKey, id);
-            await _redis.KeyDeleteAsync(objectKey);
         }
 
         return res;
