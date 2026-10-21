@@ -44,7 +44,7 @@ public class ReminderService : IReminderService
             if (!await _categoryRepository.CheckCategoryByIdAsync(dto.CategoryId))
                 throw new NotValidCategoryException();
             
-            if (!await _categoryRepository.CheckMemberAsync(dto.CreatorId, dto.CategoryId))
+            if (!await _categoryRepository.CheckMemberByEmailAsync(email, dto.CategoryId))
                 throw new NotValidCategoryException();
         }
 
@@ -103,6 +103,12 @@ public class ReminderService : IReminderService
 
         if (reminder == null)
             throw new NotValidReminderException();
+        
+        if (reminder.CreatorId != userId)
+            throw new NotValidReminderException();
+        
+        if (!await _categoryRepository.CheckMemberAsync(userId, dto.CategoryId))
+            throw new NotValidCategoryException();
 
         reminder.CategoryId = dto.CategoryId;
         reminder.Title = dto.Title;
@@ -126,6 +132,9 @@ public class ReminderService : IReminderService
         if (reminder == null)
             throw new NotValidReminderException();
         
+        if (reminder.CreatorId != userId)
+            throw new NotValidReminderException();
+        
         var processedNotifications =
             await _notificationRepository.GetNotificationsByReminderAsync(reminderId, 
                 ProcessedStatusTypes.Processed);
@@ -147,6 +156,9 @@ public class ReminderService : IReminderService
         var reminder = await _reminderRepository.GetReminderAsync(reminderId, userId);
 
         if (reminder == null)
+            throw new NotValidReminderException();
+        
+        if (reminder.CreatorId != userId)
             throw new NotValidReminderException();
 
         reminder.IsCompleted = CompletedStatusTypes.Completed;
@@ -175,6 +187,9 @@ public class ReminderService : IReminderService
         var reminder = await _reminderRepository.GetReminderAsync(reminderId, userId);
 
         if (reminder == null)
+            throw new NotValidReminderException();
+        
+        if (reminder.CreatorId != userId)
             throw new NotValidReminderException();
 
         reminder.IsCompleted = CompletedStatusTypes.NotCompleted;

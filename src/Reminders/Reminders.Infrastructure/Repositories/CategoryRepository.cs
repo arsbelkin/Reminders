@@ -53,7 +53,10 @@ public class CategoryRepository : ICategoryRepository
 
     public async Task<Category?> GetCategoryByIdAsync(Guid categoryId)
     {
-        var cat = await _dbContext.Categories.FirstOrDefaultAsync(c => c.Id == categoryId);
+        var cat = await _dbContext.Categories
+            .Include(c => c.Members)
+            .FirstOrDefaultAsync(c => c.Id == categoryId);
+
         return cat;
     }
 
@@ -91,5 +94,10 @@ public class CategoryRepository : ICategoryRepository
     public async Task<bool> CheckMemberAsync(Guid userId, Guid categoryId)
     {
         return await _dbContext.Categories.AnyAsync(c => c.Id == categoryId && c.Members.Any(m => m.Id == userId));
+    }
+
+    public async Task<bool> CheckMemberByEmailAsync(string email, Guid categoryId)
+    {
+        return await _dbContext.Categories.AnyAsync(c => c.Id == categoryId && c.Members.Any(m => m.Email == email));
     }
 }

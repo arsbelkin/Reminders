@@ -18,4 +18,5 @@ public interface ICategoryRepository
     public IQueryable<Guid> CreateCategoryQuery(string? categoryName, Guid? categoryId);
     
     public Task<bool> CheckMemberAsync(Guid userId, Guid categoryId);
+    public Task<bool> CheckMemberByEmailAsync(string email, Guid categoryId);
 }
