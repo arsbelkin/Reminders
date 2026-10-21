@@ -29,6 +29,7 @@ public class GlobalExceptionHandler : IExceptionHandler
                 NotValidEmailException => StatusCodes.Status422UnprocessableEntity,
                 MatchPasswordException => StatusCodes.Status401Unauthorized,
                 ExistedEmailException => StatusCodes.Status409Conflict,
+                ExistedUsernameException => StatusCodes.Status409Conflict,
                 LoginException => StatusCodes.Status401Unauthorized,
                 NotValidCategoryException => StatusCodes.Status404NotFound,
                 NotValidReminderException => StatusCodes.Status404NotFound,

@@ -39,6 +39,9 @@ public sealed class AuthService : IAuthService
         
         if (await _userRepository.CheckUserByEmailAsync(dto.Email))
             throw new ExistedEmailException(dto.Email);
+
+        if (await _userRepository.CheckUserByUsernameAsync(dto.Username))
+            throw new ExistedUsernameException(dto.Username);
         
         var user = new User
         {

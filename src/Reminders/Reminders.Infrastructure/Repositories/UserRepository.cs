@@ -24,6 +24,11 @@ public class UserRepository : IUserRepository
     {
         return await _dbContext.Users.AnyAsync(u => u.Email == email);
     }
+    
+    public async Task<bool> CheckUserByUsernameAsync(string username)
+    {
+        return await _dbContext.Users.AnyAsync(u => u.Username == username);
+    }
 
     public async Task<User?> GetUserByUsernameOrEmailAsync(string inputString)
     {
