@@ -24,8 +24,13 @@ public class CategoriesController : Controller
     [HttpPost]
     public async Task<ActionResult<Guid>> Create([FromBody] CategoryRequestDTO dto)
     {
+        var userEmail = User.FindFirstValue(ClaimTypes.Email);
+        
         var createDto = _mapper.Map<CategoryCreateDTO>(dto);
         createDto.CreatorId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        
+        if (!createDto.UsersEmails.Contains(userEmail))
+            createDto.UsersEmails.Add(userEmail);
 
         var categoryId = await _categoryService.CreateCategoryAsync(createDto);
         return Ok(new { CategoryId = categoryId });

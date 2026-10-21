@@ -1,4 +1,5 @@
 ﻿using MapsterMapper;
+using Reminders.Application.Common;
 using Reminders.Application.Enums;
 using Reminders.Application.Exceptions;
 using Reminders.Application.Repositories.Interfaces;
@@ -15,6 +16,7 @@ public class CategoryService : ICategoryService
     private readonly ICategoryRepository _categoryRepository;
     private readonly IReminderRepository _reminderRepository;
     private readonly INotificationRepository _notificationRepository;
+    private readonly IUserRepository _userRepository;
     private readonly IMapper _mapper;
     private readonly IRedisNotification _redis;
 
@@ -23,7 +25,8 @@ public class CategoryService : ICategoryService
         IReminderRepository reminderRepository,
         IMapper mapper,
         INotificationRepository notificationRepository,
-        IRedisNotification redis
+        IRedisNotification redis,
+        IUserRepository userRepository
     )
     {
         _categoryRepository = categoryRepository;
@@ -31,17 +34,30 @@ public class CategoryService : ICategoryService
         _reminderRepository = reminderRepository;
         _notificationRepository = notificationRepository;
         _redis = redis;
+        _userRepository =  userRepository;
     }
 
     public async Task<Guid> CreateCategoryAsync(CategoryCreateDTO dto)
     {
+        foreach (var email in dto.UsersEmails)
+        {
+            if (!EmailValidator.IsValid(email))
+                throw new NotValidEmailException(email);
+
+            if (!await _userRepository.CheckUserByEmailAsync(email))
+                throw new NotValidEmailException(email);
+        }
+
+        var users = await _userRepository.GetAllUsersByEmailAsync(dto.UsersEmails);
+        
         var category = new Category
         {
             Id = Guid.CreateVersion7(),
             CreatorId = dto.CreatorId,
             Title = dto.Title,
             Description = dto.Description,
-            CreatedTime = DateTime.UtcNow
+            CreatedTime = DateTime.UtcNow,
+            Members = users
         };
 
         await _categoryRepository.CreateCategoryAsync(category);
