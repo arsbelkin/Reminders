@@ -1,1 +1,1 @@
-# RemindersAPI
+# Reminders
