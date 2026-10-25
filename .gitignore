@@ -1316,3 +1316,5 @@ test/
 yarn-error.log
 
 # End of https://www.toptal.com/developers/gitignore/api/angular,vue,vuejs,react,node
+
+Client/RemindersClient/.vscode/
