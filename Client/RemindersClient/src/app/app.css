@@ -27,3 +27,26 @@
 .footer small {
   color: #64748b;
 }
+
+.header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  background-color: #ffffff;
+}
+
+.header__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header__logo {
+  width: 32px;
+  height: 32px;
+  color: #2563eb;
+}
+
+.header__name {
+  font-size: 22px;
+  font-weight: 700;
+}
