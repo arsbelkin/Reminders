@@ -62,6 +62,9 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IFileManager, FileManager>();
+
 builder.Services.AddMapster();
 
 builder.Services.AddJWTAuthentication(builder.Configuration);
