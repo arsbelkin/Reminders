@@ -1,6 +1,6 @@
-﻿using System.Net;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Reminders.Application.Common.Interfaces;
+using Reminders.Application.TransferModels.User;
 
 namespace Reminders.Application.Common;
 
@@ -20,10 +20,16 @@ public class FileManager : IFileManager
         await File.WriteAllBytesAsync(fullPath, data);
     }
 
-    public async Task<byte[]> ReadAsync(string fileName)
+    public async Task<UserFileDTO> ReadAsync(string fileName)
     {
         var fullPath = Path.Combine(_storageRoot, fileName);
         
-        return await File.ReadAllBytesAsync(fullPath);
+        var dto = new UserFileDTO
+        {
+            File = await File.ReadAllBytesAsync(fullPath),
+            Extension = Path.GetExtension(fileName)
+        };
+        
+        return dto;
     }
 }

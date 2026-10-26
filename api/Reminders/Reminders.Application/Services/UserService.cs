@@ -2,6 +2,7 @@
 using Reminders.Application.Exceptions;
 using Reminders.Application.Repositories.Interfaces;
 using Reminders.Application.Services.Interfaces;
+using Reminders.Application.TransferModels.User;
 
 namespace Reminders.Application.Services;
 
@@ -16,23 +17,23 @@ public class UserService : IUserService
         _fileManager = fileManager;
     }
     
-    public async Task LoadAvatarAsync(Guid userId, byte[] avatar)
+    public async Task LoadAvatarAsync(Guid userId, UserFileDTO dto)
     {
         var user = await _userRepository.GetUserByIdAsync(userId);
 
         if (user == null)
             throw new NotValidUserException();
 
-        var fileName = user.Id + ".jpeg";
+        var fileName = user.Id + dto.Extension;
         
-        await _fileManager.SaveAsync(fileName, avatar);
+        await _fileManager.SaveAsync(fileName, dto.File);
 
         user.AvatarFileName = fileName;
         
         await _userRepository.UpdateUserAsync(user);
     }
 
-    public async Task<byte[]?> GetAvatarAsync(Guid userId)
+    public async Task<UserFileDTO?> GetAvatarAsync(Guid userId)
     {
         var user = await _userRepository.GetUserByIdAsync(userId);
         
@@ -42,8 +43,6 @@ public class UserService : IUserService
         if (user.AvatarFileName == null)
             return null;
         
-        var fileName = user.Id + ".jpeg";
-        
-        return await _fileManager.ReadAsync(fileName);
+        return await _fileManager.ReadAsync(user.AvatarFileName);
     }
 }
