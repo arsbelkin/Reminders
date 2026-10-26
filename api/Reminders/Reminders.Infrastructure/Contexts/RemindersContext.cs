@@ -44,6 +44,7 @@ public class RemindersContext : DbContext
         userEntity.Property(u => u.PasswordHash).HasComment("хэшированный пароль").IsRequired();
         userEntity.Property(u => u.CreatedTime).HasComment("время создания").IsRequired();
         userEntity.Property(u => u.IsAdmin).HasComment("является ли пользователь админом").IsRequired();
+        userEntity.Property(u => u.AvatarFileName).HasComment("название файла аватара");
     }
     
     private static void SetupCategories(ModelBuilder modelBuilder)

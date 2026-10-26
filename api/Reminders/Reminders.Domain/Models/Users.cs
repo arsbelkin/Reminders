@@ -17,4 +17,6 @@ public class User
     public DateTime CreatedTime { get; set; }
     
     public bool IsAdmin { get; set; }
+    
+    public string? AvatarFileName { get; set; }
 }

@@ -190,6 +190,10 @@ namespace Reminders.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasComment("Id");
 
+                    b.Property<string>("AvatarFileName")
+                        .HasColumnType("text")
+                        .HasComment("название файла аватара");
+
                     b.Property<DateTime>("CreatedTime")
                         .HasColumnType("timestamp with time zone")
                         .HasComment("время создания");
