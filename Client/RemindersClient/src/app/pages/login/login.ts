@@ -4,6 +4,7 @@ import { finalize } from 'rxjs';
 import { UserLoginDto } from '../../api/models/user-login-dto';
 import { AuthService } from '../../api/services';
 import { TokenStorageService } from '../../auth/token-storage.service';
+import { Router } from '@angular/router';
 
 @Component({
   imports: [ReactiveFormsModule],
@@ -19,6 +20,7 @@ export class Login {
 
   private readonly authApi = inject(AuthService);
   private readonly tokenStorage = inject(TokenStorageService);
+  private readonly router = inject(Router);
 
   readonly form = new FormGroup({
     inputString: new FormControl('', {
@@ -91,8 +93,7 @@ export class Login {
 
           this.tokenStorage.saveToken(response.token);
 
-          // переход на страницу напоминаний
-
+          this.router.navigate(['/reminders']);
         },
 
         error: (error) => {
