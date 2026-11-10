@@ -1,0 +1,81 @@
+@if (errorMessage(); as message) {
+  <div class="error-toast" role="alert" aria-atomic="true">
+    <svg class="error-toast__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v6M12 17h.01" />
+    </svg>
+    <div class="error-toast__content">
+      <p class="error-toast__title">Не удалось войти</p>
+      <p>{{ message }}</p>
+    </div>
+    <button class="error-toast__close" type="button" aria-label="Закрыть уведомление"
+      (click)="dismissError()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+        stroke-linecap="round" aria-hidden="true">
+        <path d="m6 6 12 12M18 6 6 18" />
+      </svg>
+    </button>
+  </div>
+}
+
+<section class="login-card" aria-labelledby="login-title">
+  <div class="login-mark" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+      stroke-linecap="round" stroke-linejoin="round">
+      <rect x="5" y="3" width="15" height="18" rx="2" />
+      <path d="M9 3v18M3 7h4M3 12h4M3 17h4M12 8h5M12 12h5M12 16h3" />
+    </svg>
+  </div>
+
+  <h1 id="login-title">С возвращением!</h1>
+
+  <form class="login-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <div class="form-field">
+      <label for="login-input">Логин или email</label>
+      <input #loginInput id="login-input" type="text" formControlName="inputString"
+        autocomplete="username" placeholder="Введите логин или email" spellcheck="false"
+        autocapitalize="none" required
+        [class.is-invalid]="form.controls.inputString.touched && form.controls.inputString.invalid"
+        [attr.aria-invalid]="form.controls.inputString.touched && form.controls.inputString.invalid" />
+    </div>
+
+    <div class="form-field">
+      <label for="password-input">Пароль</label>
+      <div class="password-field"
+        [class.is-invalid]="form.controls.password.touched && form.controls.password.invalid">
+        <input #passwordInput id="password-input" [type]="passwordVisible() ? 'text' : 'password'"
+          formControlName="password" autocomplete="current-password" placeholder="Введите пароль" required
+          [attr.aria-invalid]="form.controls.password.touched && form.controls.password.invalid" />
+        <button class="password-toggle" type="button" (click)="togglePassword()"
+          [attr.aria-label]="passwordVisible() ? 'Скрыть пароль' : 'Показать пароль'"
+          [attr.title]="passwordVisible() ? 'Скрыть пароль' : 'Показать пароль'"
+          [attr.aria-pressed]="passwordVisible()" aria-controls="password-input">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            @if (passwordVisible()) {
+              <path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.8 5.2A11 11 0 0 1 12 5c6 0 10 7 10 7a18 18 0 0 1-3 3.8M6.3 6.3A22 22 0 0 0 2 12s4 7 10 7a11 11 0 0 0 5.7-1.7" />
+            } @else {
+              <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" />
+              <circle cx="12" cy="12" r="3" />
+            }
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <button class="login-button" type="submit">
+      Войти
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M5 12h14m-5-5 5 5-5 5" />
+      </svg>
+    </button>
+  </form>
+
+  <div class="login-divider"><span>Ещё нет аккаунта?</span></div>
+  <button class="register-button" type="button" disabled aria-describedby="registration-note">
+    Зарегистрироваться <span>Скоро</span>
+  </button>
+  <p class="registration-note" id="registration-note">Регистрация скоро появится</p>
+</section>
