@@ -1,0 +1,143 @@
+:host {
+  display: block;
+  height: 100%;
+  min-width: 0;
+}
+
+.reminder-card {
+  --priority-color: #475569;
+  --priority-background: #f1f5f9;
+  --priority-dot: #94a3b8;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  height: 100%;
+  min-height: 198px;
+  padding: 22px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 6px #0f172a04;
+}
+
+.reminder-card[data-priority='1'] {
+  --priority-color: #1d4ed8;
+  --priority-background: #eff6ff;
+  --priority-dot: #3b82f6;
+}
+
+.reminder-card[data-priority='2'] {
+  --priority-color: #854d0e;
+  --priority-background: #fefce8;
+  --priority-dot: #ca8a04;
+}
+
+.reminder-card[data-priority='3'] {
+  --priority-color: #9a3412;
+  --priority-background: #fff7ed;
+  --priority-dot: #f97316;
+}
+
+.reminder-card[data-priority='4'] {
+  --priority-color: #be123c;
+  --priority-background: #fff1f2;
+  --priority-dot: #f43f5e;
+}
+
+.card-category {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.card-category svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  color: #94a3b8;
+}
+
+.card-title {
+  margin: 0;
+  color: #1e293b;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.reminder-card--completed .card-title {
+  color: #64748b;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 9px;
+  border-radius: 6px;
+  color: var(--priority-color);
+  background: var(--priority-background);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.priority-badge::before {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--priority-dot);
+  content: '';
+}
+
+.completion-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.completion-status svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+.completion-status--completed {
+  color: #15803d;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .reminder-card { min-height: 184px; padding: 20px; }
+}

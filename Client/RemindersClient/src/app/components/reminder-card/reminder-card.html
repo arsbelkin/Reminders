@@ -1,0 +1,33 @@
+<article class="reminder-card"
+  [attr.data-priority]="reminder().priority ?? 0"
+  [class.reminder-card--completed]="reminder().isCompleted === 1">
+  <div class="card-category">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+    </svg>
+    <span>{{ reminder().categoryName || 'Без категории' }}</span>
+  </div>
+
+  <h2 class="card-title">{{ reminder().title || 'Без названия' }}</h2>
+
+  <div class="card-footer">
+    <span class="priority-badge">
+      <span class="visually-hidden">Приоритет: </span>
+      {{ priorityLabels[reminder().priority ?? 0] ?? 'Неизвестен' }}
+    </span>
+    <span class="completion-status" [class.completion-status--completed]="reminder().isCompleted === 1">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"
+        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        @if (reminder().isCompleted === 1) {
+          <circle cx="10" cy="10" r="7.25" />
+          <path d="m6.75 10 2.1 2.1 4.4-4.4" />
+        } @else {
+          <circle cx="10" cy="10" r="7.25" />
+          <path d="M10 6v4l2.5 1.5" />
+        }
+      </svg>
+      {{ reminder().isCompleted === 1 ? 'Выполнено' : 'Не выполнено' }}
+    </span>
+  </div>
+</article>

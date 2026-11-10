@@ -1,1 +1,55 @@
-<p>reminders works!</p>
+<section class="reminders-page" aria-labelledby="reminders-title">
+  <div class="page-heading">
+    <h1 id="reminders-title">Мои напоминания</h1>
+    @if (!isLoading() && !errorMessage()) {
+      <span class="reminders-count">{{ reminders().length }} всего</span>
+    }
+  </div>
+
+  @if (isLoading()) {
+    <div class="page-state" role="status">
+      <span class="loading-spinner" aria-hidden="true"></span>
+      <p class="state-title">Загружаем напоминания…</p>
+    </div>
+  } @else if (errorMessage(); as message) {
+    <div class="page-state page-state--error" role="alert">
+      <span class="state-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v6m0 4h.01" />
+        </svg>
+      </span>
+      <h2 class="state-title">Не удалось получить список</h2>
+      <p class="state-description">{{ message }}</p>
+      <button class="retry-button" type="button" (click)="loadReminders()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 7v5h-5M4 17v-5h5" />
+          <path d="M6.1 7a7 7 0 0 1 11.6-1L20 9M4 15l2.3 3A7 7 0 0 0 17.9 17" />
+        </svg>
+        Попробовать снова
+      </button>
+    </div>
+  } @else {
+    <ul class="reminders-grid" aria-label="Напоминания">
+      @for (reminder of reminders(); track reminder.id) {
+        <li>
+          <app-reminder-card [reminder]="reminder" />
+        </li>
+      } @empty {
+        <li class="page-state empty-state">
+          <span class="state-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="3" width="15" height="18" rx="2" />
+              <path d="M9 3v18M3 7h4M3 12h4M3 17h4M12 8h5M12 12h5M12 16h3" />
+            </svg>
+          </span>
+          <h2 class="state-title">Напоминаний пока нет</h2>
+          <p class="state-description">Добавленные напоминания появятся здесь.</p>
+        </li>
+      }
+    </ul>
+  }
+</section>
