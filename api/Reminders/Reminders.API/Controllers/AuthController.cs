@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Reminders.Application.Services.Interfaces;
-using Reminders.Application.TransferModels.User;
+using Reminders.Application.TransferModels.Auth;
 
 namespace Reminders.API.Controllers;
 
@@ -9,21 +9,21 @@ namespace Reminders.API.Controllers;
 public class AuthController : Controller
 {
     private readonly IAuthService _authService;
-    
+
     public AuthController(IAuthService authService)
     {
         _authService = authService;
     }
-    
+
     [HttpPost("register")]
-    public async Task<ActionResult<Guid>> Register([FromBody] UserRegisterDTO registerDto)
+    public async Task<ActionResult<RegisterResponseDTO>> Register([FromBody] UserRegisterDTO registerDto)
     {
         var userId = await _authService.RegisterUserAsync(registerDto);
-        return Ok(new {UserId = userId});
+        return Ok(new RegisterResponseDTO { Id = userId });
     }
 
     [HttpPost("login")]
-    public async Task<ActionResult<string>> Login([FromBody]  UserLoginDTO dto)
+    public async Task<ActionResult<LoginResponseDTO>> Login([FromBody] UserLoginDTO dto)
     {
         var token = await _authService.LoginAsync(dto);
 
@@ -34,13 +34,10 @@ public class AuthController : Controller
             SameSite = SameSiteMode.Strict,
             Expires = DateTime.Now.AddMinutes(15)
         };
-        
+
         Response.Cookies.Append("X-Access-Token", token, cookieOptions);
-        
-        return Ok(new Dictionary<string, string>
-            {
-                { "X-Access-Token", token }
-            });
+
+        return Ok(new LoginResponseDTO { Token = token });
     }
 
     [HttpPost("logout")]

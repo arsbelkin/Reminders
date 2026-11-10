@@ -1,4 +1,4 @@
-﻿namespace Reminders.Application.TransferModels.User;
+﻿namespace Reminders.Application.TransferModels.Auth;
 
 public class UserLoginDTO
 {

@@ -7,7 +7,7 @@ using Reminders.Application.Services.Interfaces;
 using Reminders.Application.Common.Interfaces;
 using Reminders.Application.Common;
 using Reminders.Application.Repositories.Interfaces;
-using Reminders.Application.TransferModels.User;
+using Reminders.Application.TransferModels.Auth;
 using Reminders.Domain.Models;
 using Reminders.Application.Exceptions;
 

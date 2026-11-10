@@ -1,4 +1,4 @@
-﻿using Reminders.Application.TransferModels.User;
+﻿using Reminders.Application.TransferModels.Auth;
 
 namespace Reminders.Application.Services.Interfaces;
 
