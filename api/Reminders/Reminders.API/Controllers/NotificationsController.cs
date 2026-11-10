@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Reminders.Application.Services.Interfaces;
 using Reminders.Application.TransferModels.Notification;
+using Reminders.Application.TransferModels.Common;
 
 namespace Reminders.API.Controllers;
 
@@ -19,12 +20,12 @@ public class NotificationsController : Controller
     }
 
     [HttpPost]
-    public async Task<ActionResult<Guid>> CreateNotification([FromBody] NotificationCreateDTO dto)
+    public async Task<ActionResult<IdResponseDTO>> CreateNotification([FromBody] NotificationCreateDTO dto)
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
         var notificationId = await _notificationService.CreateNotificationAsync(dto, userId);
 
-        return Ok(new { NotificationId = notificationId });
+        return Ok(new IdResponseDTO { Id = notificationId });
     }
 
     [HttpGet]
@@ -42,7 +43,7 @@ public class NotificationsController : Controller
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
         await _notificationService.DeleteNotificationAsync(notificationId, userId);
         
-        return Ok(new { message = "Notification deleted successfully" });
+        return NoContent();
     }
 
     [HttpPatch("{notificationId:guid}")]
@@ -51,6 +52,6 @@ public class NotificationsController : Controller
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
         await _notificationService.UpdateNotificationAsync(notificationId, dto, userId);
         
-        return Ok(new { message = "Notification updated successfully" });
+        return NoContent();
     }
 }

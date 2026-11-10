@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Reminders.Application.Services.Interfaces;
 using Reminders.Application.TransferModels.Category;
+using Reminders.Application.TransferModels.Common;
 
 namespace Reminders.API.Controllers;
 
@@ -22,7 +23,7 @@ public class CategoriesController : Controller
     }
 
     [HttpPost]
-    public async Task<ActionResult<Guid>> Create([FromBody] CategoryRequestDTO dto)
+    public async Task<ActionResult<IdResponseDTO>> Create([FromBody] CategoryRequestDTO dto)
     {
         var userEmail = User.FindFirstValue(ClaimTypes.Email);
         
@@ -33,7 +34,7 @@ public class CategoriesController : Controller
             createDto.UsersEmails.Add(userEmail);
 
         var categoryId = await _categoryService.CreateCategoryAsync(createDto);
-        return Ok(new { CategoryId = categoryId });
+        return Ok(new IdResponseDTO { Id = categoryId });
     }
 
     [HttpGet]
@@ -74,7 +75,7 @@ public class CategoriesController : Controller
 
         await _categoryService.UpdateCategoryAsync(updateDto);
 
-        return Ok(new { message = "Category updated successfully" });
+        return NoContent();
     }
 
     [HttpDelete("{categoryId:guid}")]
@@ -87,6 +88,6 @@ public class CategoriesController : Controller
         };
 
         await _categoryService.DeleteCategoryAsync(deleteDto);
-        return Ok(new { message = "Category deleted successfully" });
+        return NoContent();
     }
 }

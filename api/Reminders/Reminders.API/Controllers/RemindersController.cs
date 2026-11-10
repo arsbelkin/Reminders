@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Reminders.Application.Services.Interfaces;
 using Reminders.Application.TransferModels.Reminder;
+using Reminders.Application.TransferModels.Common;
 
 namespace Reminders.API.Controllers;
 
@@ -22,7 +23,7 @@ public class RemindersController : Controller
     }
 
     [HttpPost]
-    public async Task<ActionResult<Guid>> Create([FromBody] ReminderRequestDTO dto)
+    public async Task<ActionResult<IdResponseDTO>> Create([FromBody] ReminderRequestDTO dto)
     {
         var userEmail =  User.FindFirstValue(ClaimTypes.Email);
         
@@ -34,7 +35,7 @@ public class RemindersController : Controller
         
         var reminderId = await _reminderService.CreateReminderAsync(createDto);
         
-        return Ok(new {ReminderId = reminderId});
+        return Ok(new IdResponseDTO { Id = reminderId });
     }
 
     [HttpGet]
@@ -78,7 +79,7 @@ public class RemindersController : Controller
         
         await _reminderService.UpdateReminderAsync(reminderId, userId, dto);
         
-        return Ok(new {message = "Reminder updated successfully"});
+        return NoContent();
     }
 
     [HttpDelete("{reminderId:guid}")]
@@ -87,7 +88,7 @@ public class RemindersController : Controller
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
         await _reminderService.DeleteReminderAsync(reminderId, userId);
         
-        return Ok(new { message = "Reminder deleted successfully" });
+        return NoContent();
     }
 
     [HttpPost("{reminderId}/complete")]
@@ -96,7 +97,7 @@ public class RemindersController : Controller
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
         await _reminderService.CompleteReminderAsync(reminderId, userId);
         
-        return Ok(new { message = "Reminder complete successfully" });
+        return NoContent();
     }
     
     [HttpPost("{reminderId}/reopen")]
@@ -105,6 +106,6 @@ public class RemindersController : Controller
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
         await _reminderService.ReopenReminderAsync(reminderId, userId);
         
-        return Ok(new { message = "Reminder reopen successfully" });
+        return NoContent();
     }
 }
