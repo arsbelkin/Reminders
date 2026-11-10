@@ -54,7 +54,8 @@ input.is-invalid:focus { box-shadow: 0 0 0 3px #dc262614; }
 button:focus-visible { outline: 3px solid #93b4ff; outline-offset: 3px; }
 
 .login-button { display: flex; justify-content: center; align-items: center; gap: 9px; width: 100%; min-height: 48px; margin-top: 4px; border: 0; border-radius: 9px; color: #fff; background: #2563eb; box-shadow: 0 3px 8px #2563eb24; font-size: 14px; font-weight: 600; cursor: pointer; }
-.login-button:hover { background: #1d4ed8; }
+.login-button:hover:enabled { background: #1d4ed8; }
+.login-button:disabled { opacity: .65; cursor: wait; }
 .login-button svg { width: 18px; height: 18px; }
 .login-divider { display: flex; align-items: center; gap: 13px; margin: 25px 0 20px; color: #94a3b8; font-size: 12px; }
 .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: #e8edf4; }

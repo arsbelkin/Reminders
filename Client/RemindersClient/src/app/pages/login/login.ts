@@ -1,6 +1,9 @@
-import { Component, ElementRef, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, output, signal, viewChild, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { UserLoginDto } from '../../api/models/user-login-dto';
+import { AuthService } from '../../api/services';
+import { TokenStorageService } from '../../auth/token-storage.service';
 
 @Component({
   imports: [ReactiveFormsModule],
@@ -12,6 +15,10 @@ export class Login {
   readonly loginRequested = output<UserLoginDto>();
   readonly passwordVisible = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly isSubmitting = signal(false);
+
+  private readonly authApi = inject(AuthService);
+  private readonly tokenStorage = inject(TokenStorageService);
 
   readonly form = new FormGroup({
     inputString: new FormControl('', {
@@ -25,10 +32,11 @@ export class Login {
   });
 
   private readonly loginInput = viewChild.required<ElementRef<HTMLInputElement>>('loginInput');
-  private readonly passwordInput = viewChild.required<ElementRef<HTMLInputElement>>('passwordInput');
+  private readonly passwordInput =
+    viewChild.required<ElementRef<HTMLInputElement>>('passwordInput');
 
   togglePassword(): void {
-    this.passwordVisible.update(visible => !visible);
+    this.passwordVisible.update((visible) => !visible);
   }
 
   dismissError(): void {
@@ -40,15 +48,23 @@ export class Login {
   }
 
   submit(): void {
+    if (this.isSubmitting()) {
+      return;
+    }
+
     this.form.markAllAsTouched();
 
     if (this.form.invalid) {
       const loginInvalid = this.form.controls.inputString.invalid;
       const passwordInvalid = this.form.controls.password.invalid;
 
-      this.showError(loginInvalid && passwordInvalid
-        ? 'Заполните логин или email и пароль.'
-        : loginInvalid ? 'Укажите логин или email.' : 'Введите пароль.');
+      this.showError(
+        loginInvalid && passwordInvalid
+          ? 'Заполните логин или email и пароль.'
+          : loginInvalid
+            ? 'Укажите логин или email.'
+            : 'Введите пароль.',
+      );
 
       (loginInvalid ? this.loginInput() : this.passwordInput()).nativeElement.focus();
       return;
@@ -56,10 +72,36 @@ export class Login {
 
     this.dismissError();
     const values = this.form.getRawValue();
+    this.isSubmitting.set(true);
 
-    this.loginRequested.emit({
-      inputString: values.inputString.trim(),
-      password: values.password,
-    });
+    this.authApi
+      .apiV1AuthLoginPost$Json({
+        body: {
+          inputString: values.inputString.trim(),
+          password: values.password,
+        },
+      })
+      .pipe(finalize(() => this.isSubmitting.set(false)))
+      .subscribe({
+        next: (response) => {
+          if (!response.token) {
+            this.showError('Не удалось выполнить вход. Попробуйте ещё раз.');
+            return;
+          }
+
+          this.tokenStorage.saveToken(response.token);
+
+          // переход на страницу напоминаний
+
+        },
+
+        error: (error) => {
+          this.showError(
+            error.status === 401
+              ? 'Неверный логин или пароль.'
+              : 'Не удалось выполнить вход. Попробуйте ещё раз.',
+          );
+        },
+      });
   }
 }
