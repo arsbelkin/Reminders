@@ -8,7 +8,7 @@ describe('Reminders', () => {
   let component: Reminders;
   let fixture: ComponentFixture<Reminders>;
   let response: Subject<ReminderListViewDto[]>;
-  const remindersApi = { apiV1RemindersGet$Json: vi.fn() };
+  const remindersApi = { apiV1RemindersSearchPost$Json: vi.fn() };
   const workReminders: ReminderListViewDto[] = [
     { id: 'work-1', title: 'Отчёт', categoryId: 'work', categoryName: 'Работа', priority: 3, isCompleted: 0 },
     { id: 'home-1', title: 'Покупки', categoryId: 'home', categoryName: 'Дом', priority: 1, isCompleted: 1 },
@@ -33,8 +33,8 @@ describe('Reminders', () => {
 
   beforeEach(async () => {
     response = new Subject<ReminderListViewDto[]>();
-    remindersApi.apiV1RemindersGet$Json.mockReset();
-    remindersApi.apiV1RemindersGet$Json.mockReturnValue(response.asObservable());
+    remindersApi.apiV1RemindersSearchPost$Json.mockReset();
+    remindersApi.apiV1RemindersSearchPost$Json.mockReturnValue(response.asObservable());
 
     await TestBed.configureTestingModule({
       imports: [Reminders],
@@ -52,7 +52,7 @@ describe('Reminders', () => {
     expect(root.querySelector('[role="status"]')?.textContent).toContain('Загружаем');
     expect(root.querySelector('.category-group')).toBeNull();
     expect(root.querySelector('table')).toBeNull();
-    expect(remindersApi.apiV1RemindersGet$Json).toHaveBeenCalledTimes(1);
+    expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenCalledTimes(1);
   });
 
   it('groups interleaved reminders by category and keeps their original order', () => {
@@ -127,7 +127,7 @@ describe('Reminders', () => {
     fixture.detectChanges();
 
     const refreshedResponse = new Subject<ReminderListViewDto[]>();
-    remindersApi.apiV1RemindersGet$Json.mockReturnValue(refreshedResponse.asObservable());
+    remindersApi.apiV1RemindersSearchPost$Json.mockReturnValue(refreshedResponse.asObservable());
     component.loadReminders();
     fixture.detectChanges();
     refreshedResponse.next([
@@ -175,7 +175,7 @@ describe('Reminders', () => {
       .toEqual(['Высокий', 'Низкий', 'Средний']);
     expect([...rows].map((row) => row.cells[3].textContent?.trim()))
       .toEqual(['Не выполнено', 'Выполнено', 'Не выполнено']);
-    expect(remindersApi.apiV1RemindersGet$Json).toHaveBeenCalledTimes(1);
+    expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenCalledTimes(1);
   });
 
   it('includes collapsed categories in the table and restores their state when returning to cards', () => {
@@ -192,7 +192,7 @@ describe('Reminders', () => {
     expect(panelFor(workButton).hidden).toBe(true);
     expect(panelFor(homeButton).hidden).toBe(false);
     expect(root.querySelector('table')).toBeNull();
-    expect(remindersApi.apiV1RemindersGet$Json).toHaveBeenCalledTimes(1);
+    expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenCalledTimes(1);
   });
 
   it('uses the same fallback labels and completion states in the table', () => {
@@ -210,6 +210,66 @@ describe('Reminders', () => {
     expect(rows[1].querySelector('.completion-status--completed')).not.toBeNull();
     expect(rows[2].querySelector('.priority-badge')?.textContent).toBe('Неизвестен');
     expect(rows[2].querySelector('.completion-status--completed')).toBeNull();
+  });
+
+  it('submits the search form without a page reload and displays the matching reminders', () => {
+    const root = finishLoading(workReminders);
+    const input = root.querySelector<HTMLInputElement>('#reminder-search')!;
+    input.value = '  Отчёт  ';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    const searchResponse = new Subject<ReminderListViewDto[]>();
+    remindersApi.apiV1RemindersSearchPost$Json.mockReturnValue(searchResponse.asObservable());
+    const submission = new Event('submit', { bubbles: true, cancelable: true });
+
+    root.querySelector('form')!.dispatchEvent(submission);
+    fixture.detectChanges();
+
+    expect(submission.defaultPrevented).toBe(true);
+    expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenLastCalledWith({
+      body: { searchText: 'Отчёт' },
+    });
+    expect(component.isLoading()).toBe(true);
+    expect(root.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(true);
+
+    searchResponse.next([workReminders[0]]);
+    searchResponse.complete();
+    fixture.detectChanges();
+
+    expect([...root.querySelectorAll('.card-title')].map((title) => title.textContent)).toEqual(['Отчёт']);
+    expect(input.value).toBe('  Отчёт  ');
+    expect(root.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(false);
+  });
+
+  it('searches on the submit button and restores all reminders after clearing the input', () => {
+    const root = finishLoading(workReminders);
+    const input = root.querySelector<HTMLInputElement>('#reminder-search')!;
+    input.value = 'Покупки';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    const searchResponse = new Subject<ReminderListViewDto[]>();
+    remindersApi.apiV1RemindersSearchPost$Json.mockReturnValue(searchResponse.asObservable());
+    root.querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
+
+    expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenCalledTimes(2);
+    expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenLastCalledWith({
+      body: { searchText: 'Покупки' },
+    });
+    searchResponse.next([workReminders[1]]);
+    searchResponse.complete();
+    fixture.detectChanges();
+
+    input.value = '';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    const clearedResponse = new Subject<ReminderListViewDto[]>();
+    remindersApi.apiV1RemindersSearchPost$Json.mockReturnValue(clearedResponse.asObservable());
+    root.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+
+    expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenLastCalledWith({
+      body: { searchText: null },
+    });
+    clearedResponse.next(workReminders);
+    clearedResponse.complete();
+    fixture.detectChanges();
+    expect(root.querySelectorAll('app-reminder-card')).toHaveLength(3);
   });
 
   it.each(['Карточки', 'Таблица'] as const)('shows the empty state in %s mode', (mode) => {

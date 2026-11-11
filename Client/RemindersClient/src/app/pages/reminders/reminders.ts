@@ -4,6 +4,7 @@ import { RemindersService } from '../../api/services';
 import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
 import { ReminderCard } from '../../components/reminder-card/reminder-card';
 import { ReminderTable } from '../../components/reminder-table/reminder-table';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 interface ReminderCategoryGroup {
   key: string;
@@ -12,13 +13,20 @@ interface ReminderCategoryGroup {
 }
 
 @Component({
-  imports: [ReminderCard, ReminderTable],
+  imports: [ReminderCard, ReminderTable, ReactiveFormsModule],
   selector: 'app-reminders',
   styleUrl: './reminders.css',
   templateUrl: './reminders.html',
 })
 export class Reminders implements OnInit {
   private readonly remindersApi = inject(RemindersService);
+
+  readonly searchControl = new FormControl('', {
+    nonNullable: true,
+  });
+  readonly searchForm = new FormGroup({
+    searchText: this.searchControl,
+  });
 
   readonly reminders = signal<ReminderListViewDto[]>([]);
   readonly isLoading = signal(false);
@@ -83,7 +91,11 @@ export class Reminders implements OnInit {
     this.errorMessage.set(null);
 
     this.remindersApi
-      .apiV1RemindersGet$Json()
+      .apiV1RemindersSearchPost$Json({
+        body: {
+          searchText: this.searchControl.value.trim() || null,
+        },
+      })
       .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: (reminders) => {
