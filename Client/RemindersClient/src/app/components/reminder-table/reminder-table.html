@@ -38,7 +38,13 @@
               {{ reminder.title || 'Без названия' }}
             }
           </th>
-          <td class="reminder-category">{{ reminder.categoryName || 'Без категории' }}</td>
+          <td class="reminder-category">
+            @if (reminder.categoryId) {
+              <a [routerLink]="['/categories', reminder.categoryId]">{{ reminder.categoryName || 'Без категории' }}</a>
+            } @else {
+              {{ reminder.categoryName || 'Без категории' }}
+            }
+          </td>
           <td>
             <span class="priority-badge">{{ priorityLabels[reminder.priority ?? 0] ?? 'Неизвестен' }}</span>
           </td>

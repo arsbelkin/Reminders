@@ -21,7 +21,7 @@ describe('ReminderDetails', () => {
   let component: ReminderDetails;
   let allowed: boolean;
   const data: ReminderInfoViewDto = {
-    id: 'first', title: 'Подготовить отчёт', categoryName: 'Работа', description: 'Первая строка.\nВторая строка.',
+    id: 'first', title: 'Подготовить отчёт', categoryId: 'work', categoryName: 'Работа', description: 'Первая строка.\nВторая строка.',
     priority: 3, isCompleted: 1, createdTime: '2026-11-01T09:00:00Z',
     dueDate: '2026-11-15T10:30:00Z', completedTime: '2026-11-12T12:00:00Z',
     memberEmails: ['anna@example.test', 'ivan@example.test'],
@@ -75,6 +75,7 @@ describe('ReminderDetails', () => {
     expect(root().querySelector('h1')?.textContent).toBe(data.title);
     expect(root().querySelector('.description-text')?.textContent).toBe(data.description);
     expect(root().querySelector('.category-label')?.textContent).toContain('Работа');
+    expect(root().querySelector('.category-label a')?.getAttribute('href')).toBe('/categories/work');
     expect(root().querySelector('.priority-badge')?.textContent).toBe('Высокий');
     expect(root().querySelector('.completion-status')?.textContent).toContain('Выполнено');
     expect(root().querySelectorAll('.members-list li')).toHaveLength(2);

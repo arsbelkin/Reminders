@@ -32,4 +32,11 @@ describe('ReminderCard', () => {
     expect(fixture.nativeElement.querySelector('a')).toBeNull();
     expect(fixture.nativeElement.querySelector('.card-title')?.textContent.trim()).toBe('Без ссылки');
   });
+
+  it('links the category independently from the full-card reminder link', () => {
+    fixture.componentRef.setInput('reminder', {id: 'task', categoryId: 'work', categoryName: 'Работа', title: 'Отчёт'});
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.card-category a')?.getAttribute('href')).toBe('/categories/work');
+    expect(fixture.nativeElement.querySelector('.card-title a')?.getAttribute('href')).toBe('/reminders/task');
+  });
 });

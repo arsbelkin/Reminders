@@ -39,6 +39,10 @@
   color: #94a3b8;
 }
 
+.card-category a { position: relative; z-index: 1; min-width: 0; color: inherit; text-decoration: none; }
+.card-category a:hover { color: #2563eb; text-decoration: underline; text-underline-offset: 3px; }
+.card-category a:focus-visible { outline: 3px solid #93b4ff; outline-offset: 3px; border-radius: 2px; }
+
 .card-title {
   margin: 0;
   color: #1e293b;

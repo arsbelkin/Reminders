@@ -63,6 +63,9 @@ tbody tr + tr {
 }
 
 .reminder-title a { color: inherit; text-decoration: none; }
+.reminder-category a { color: inherit; text-decoration: none; }
+.reminder-category a:hover { color: #2563eb; text-decoration: underline; text-underline-offset: 3px; }
+.reminder-category a:focus-visible { outline: 3px solid #93b4ff; outline-offset: 3px; border-radius: 2px; }
 .reminder-title a:hover { color: #2563eb; text-decoration: underline; text-underline-offset: 3px; }
 .reminder-title a:focus-visible { outline: 3px solid #93b4ff; outline-offset: 3px; border-radius: 2px; }
 

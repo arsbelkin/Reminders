@@ -1,10 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterLink, RouterOutlet } from '@angular/router';
 import { AccountMenu } from './components/account-menu/account-menu';
 import { TokenStorageService } from './auth/token-storage.service';
 
 @Component({
-  imports: [RouterOutlet, AccountMenu],
+  imports: [RouterOutlet, RouterLink, AccountMenu],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',

@@ -3,6 +3,8 @@
 .details-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 28px; }
 .back-link { display: inline-flex; align-items: center; gap: 9px; color: #64748b; font-size: 13px; line-height: 1.5; text-decoration: none; }
 .back-link:hover { color: #2563eb; }
+.category-label a { color: inherit; text-decoration: none; }
+.category-label a:hover { color: #2563eb; text-decoration: underline; text-underline-offset: 3px; }
 .back-link svg, .navigation-button svg { width: 18px; height: 18px; flex-shrink: 0; }
 button { font: inherit; cursor: pointer; }
 button:focus-visible, a:focus-visible { outline: 3px solid #93b4ff; outline-offset: 3px; }

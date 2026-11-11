@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
 import { CategoriesService, RemindersService } from '../../api/services';
@@ -136,6 +136,33 @@ describe('Reminders', () => {
     expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenCalledTimes(1);
   });
 
+  it('links category details separately from the collapse control, including empty categories', () => {
+    const root = finishLoading(workReminders);
+    component.categories.set([{id: 'work', title: 'Работа'}, {id: 'empty', title: 'Планы'}]);
+    fixture.detectChanges();
+    const links = root.querySelectorAll<HTMLAnchorElement>('.category-heading a.category-name');
+    expect([...links].map(link => link.getAttribute('href'))).toEqual(['/categories/work', '/categories/empty', '/categories/home']);
+    expect(root.querySelector('.category-toggle a')).toBeNull();
+    expect(root.querySelector('.category-details-link')).toBeNull();
+    root.querySelector<HTMLButtonElement>('.category-toggle')!.click();
+    fixture.detectChanges();
+    expect(root.querySelector<HTMLUListElement>('.reminders-grid')!.hidden).toBe(true);
+    expect(root.querySelector('.category-heading a.category-name')?.getAttribute('href')).toBe('/categories/work');
+  });
+
+  it('opens a category from its name without collapsing it', () => {
+    const root = finishLoading(workReminders);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    const toggle = vi.spyOn(component, 'toggleCategory');
+    root.querySelector<HTMLAnchorElement>('.category-heading a.category-name')!.click();
+    fixture.detectChanges();
+    expect(navigate).toHaveBeenCalledTimes(1);
+    expect(toggle).not.toHaveBeenCalled();
+    const button = root.querySelector<HTMLButtonElement>('.category-toggle')!;
+    expect(button.getAttribute('aria-expanded')).toBe('true');
+    expect(panelFor(button).hidden).toBe(false);
+  });
+
   it('groups interleaved reminders by category and keeps their original order', () => {
     const root = finishLoading(workReminders);
     const groups = root.querySelectorAll('.category-group');
@@ -186,8 +213,8 @@ describe('Reminders', () => {
     expect(workButton.getAttribute('aria-expanded')).toBe('false');
     expect(panelFor(workButton).hidden).toBe(true);
     expect(panelFor(homeButton).hidden).toBe(false);
-    expect(workButton.querySelector('.category-name')?.textContent).toBe('Работа');
-    expect(workButton.querySelector('.category-count')?.textContent).toBe('2');
+    expect(workButton.closest('.category-heading')?.querySelector('.category-name')?.textContent).toBe('Работа');
+    expect(workButton.closest('.category-heading')?.querySelector('.category-count')?.textContent).toBe('2');
 
     homeButton.click();
     fixture.detectChanges();
@@ -220,10 +247,10 @@ describe('Reminders', () => {
 
     const [newButton, workButton] = root.querySelectorAll<HTMLButtonElement>('.category-toggle');
     expect(panelFor(newButton).hidden).toBe(false);
-    expect(workButton.querySelector('.category-name')?.textContent).toBe('Рабочие задачи');
+    expect(workButton.closest('.category-heading')?.querySelector('.category-name')?.textContent).toBe('Рабочие задачи');
     expect(workButton.getAttribute('aria-expanded')).toBe('false');
     expect(panelFor(workButton).hidden).toBe(true);
-    expect(panelFor(workButton).getAttribute('aria-labelledby')).toBe(workButton.id);
+    expect(panelFor(workButton).getAttribute('aria-labelledby')).toBe(workButton.closest('.category-heading')?.querySelector('.category-name')?.id);
   });
 
   it('switches from icon-only controls to an ungrouped table with the same fields', () => {

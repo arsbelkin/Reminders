@@ -1,5 +1,5 @@
 <header class="header">
-  <div class="header__brand">
+  <a class="header__brand" routerLink="/reminders">
     <svg
       class="header__logo"
       xmlns="http://www.w3.org/2000/svg"
@@ -17,7 +17,7 @@
     </svg>
 
     <span class="header__name">Reminders</span>
-  </div>
+  </a>
   @if (tokenStorage.token()) {
     <app-account-menu />
   }

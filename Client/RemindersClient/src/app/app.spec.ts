@@ -105,7 +105,7 @@ describe('App account menu', () => {
     expect(root.querySelector('.default-avatar')).not.toBeNull();
   });
 
-  it('opens placeholders, closes on outside click and returns focus on Escape', () => {
+  it('opens account choices, closes on outside click and returns focus on Escape', () => {
     signIn();
     const root = mount();
     flushAvatar();
@@ -116,14 +116,15 @@ describe('App account menu', () => {
     const items = root.querySelectorAll<HTMLButtonElement>('.account-option');
     expect([...items].map(item => item.querySelector('span')?.textContent))
       .toEqual(['Профиль', 'Выйти']);
-    expect([...items].every(item => item.disabled)).toBe(true);
+    expect(items[0].disabled).toBe(true);
+    expect(items[1].disabled).toBe(false);
     document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true}));
     fixture.detectChanges();
     expect(root.querySelector('.account-options')).toBeNull();
     expect(document.activeElement).toBe(trigger);
     trigger.click();
     fixture.detectChanges();
-    root.querySelector<HTMLElement>('.header__name')!.click();
+    root.querySelector<HTMLElement>('.footer__brand')!.click();
     fixture.detectChanges();
     expect(root.querySelector('.account-options')).toBeNull();
     expect(TestBed.inject(TokenStorageService).getToken()).toBe('access-token');

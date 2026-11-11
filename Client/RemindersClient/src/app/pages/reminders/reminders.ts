@@ -4,6 +4,7 @@ import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
 import { ReminderCard } from '../../components/reminder-card/reminder-card';
 import { ReminderTable, ReminderTableSort } from '../../components/reminder-table/reminder-table';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
 import { CategoriesService, RemindersService } from '../../api/services';
 import { CategoryListViewDto } from '../../api/models/category-list-view-dto';
@@ -17,6 +18,7 @@ import { CategoryCreate } from '../../components/category-create/category-create
 import { ReminderCreate } from '../../components/reminder-create/reminder-create';
 
 interface ReminderCategoryGroup {
+  id?: string;
   key: string;
   name: string;
   reminders: ReminderListViewDto[];
@@ -30,13 +32,14 @@ interface ReminderCategoryGroup {
     ReminderFilters,
     CategoryCreate,
     ReminderCreate,
+    RouterLink,
   ],
   selector: 'app-reminders',
   host: {
     '(document:click)': 'onDocumentClick($event)',
     '(document:keydown.escape)': 'closeCreateMenu(true)',
   },
-  styleUrls: ['./reminders.css', './reminders-search.css', './reminders-categories.css'],
+  styleUrls: ['./reminders.css', './reminders-search.css', './reminders-categories.css', './reminders-category-heading.css'],
   templateUrl: './reminders.html',
 })
 export class Reminders implements OnInit {
@@ -128,6 +131,7 @@ export class Reminders implements OnInit {
 
         const key = `id:${id}`;
         groups.set(key, {
+          id,
           key,
           name: category.title?.trim() || 'Без названия',
           reminders: [],
@@ -147,7 +151,7 @@ export class Reminders implements OnInit {
       let group = groups.get(key);
 
       if (!group) {
-        group = { key, name: categoryName || 'Без категории', reminders: [] };
+        group = { id: categoryId, key, name: categoryName || 'Без категории', reminders: [] };
         groups.set(key, group);
       }
 

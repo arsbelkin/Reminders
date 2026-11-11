@@ -238,48 +238,32 @@
           [class.category-group--collapsed]="isCategoryCollapsed(category.key)"
         >
           <h2 class="category-heading">
-            <button
-              class="category-toggle"
-              type="button"
+            <button class="category-toggle" type="button"
               [id]="'category-toggle-' + index"
+              [attr.aria-label]="(isCategoryCollapsed(category.key) ? 'Развернуть' : 'Свернуть') + ' категорию «' + category.name + '»'"
               [attr.aria-expanded]="!isCategoryCollapsed(category.key)"
               [attr.aria-controls]="'category-reminders-' + index"
-              (click)="toggleCategory(category.key)"
-            >
-              <svg
-                class="category-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.7"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <path
-                  d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"
-                />
-              </svg>
-              <span class="category-name">{{ category.name }}</span>
-              <span class="category-count">{{ category.reminders.length }}</span>
-              <svg
-                class="category-chevron"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <path d="m6 9 6 6 6-6" />
-              </svg>
-            </button>
+              (click)="toggleCategory(category.key)"></button>
+            <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+            </svg>
+            @if (category.id) {
+              <a class="category-name" [id]="'category-name-' + index"
+                [routerLink]="['/categories', category.id]">{{ category.name }}</a>
+            } @else {
+              <span class="category-name" [id]="'category-name-' + index">{{ category.name }}</span>
+            }
+            <span class="category-count">{{ category.reminders.length }}</span>
+            <svg class="category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
           </h2>
           <ul
             class="reminders-grid"
             [id]="'category-reminders-' + index"
-            [attr.aria-labelledby]="'category-toggle-' + index"
+            [attr.aria-labelledby]="'category-name-' + index"
             [hidden]="isCategoryCollapsed(category.key)"
           >
             @for (reminder of category.reminders; track reminder.id) {

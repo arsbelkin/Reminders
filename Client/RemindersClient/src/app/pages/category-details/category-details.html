@@ -1,0 +1,133 @@
+<section class="details-page" aria-label="Детали категории">
+  <div class="details-toolbar">
+    <a class="back-link" routerLink="/reminders">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+        stroke-linejoin="round" aria-hidden="true"><path d="m10 5-7 7 7 7M3 12h18" /></svg>
+      Мои напоминания
+    </a>
+    <button class="navigation-button" type="button" (click)="openNavigation()" aria-haspopup="dialog">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+        aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16M13 9h4M13 13h4" /></svg>
+      Список категорий
+    </button>
+  </div>
+  @let current = state();
+  @if (current.kind === 'loading') {
+    <div class="details-state" role="status">
+      <span class="loading-spinner" aria-hidden="true"></span><p>Загружаем категорию…</p>
+    </div>
+  } @else if (current.kind === 'error') {
+    <div class="details-state" role="alert">
+      <span class="state-symbol" aria-hidden="true">!</span>
+      <h1>{{ current.title }}</h1><p>{{ current.message }}</p>
+      @if (current.retry) {
+        <button class="retry-button" type="button" (click)="retryCategory()">Попробовать снова</button>
+      }
+      <a class="back-link" routerLink="/reminders">Вернуться к напоминаниям</a>
+    </div>
+  } @else {
+    @let category = current.category;
+    <div class="details-layout">
+      <article class="details-card">
+        <div class="details-heading">
+          <span class="category-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"
+              aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" /></svg>
+            Категория
+          </span>
+          <h1>{{ category.title || 'Без названия' }}</h1>
+        </div>
+        <section class="details-section" aria-labelledby="category-description-title">
+          <h2 id="category-description-title">Описание</h2>
+          <p class="description-text" [class.empty-text]="!category.description?.trim()">{{ category.description?.trim() || 'Описание не добавлено.' }}</p>
+        </section>
+        <section class="details-section" aria-labelledby="category-members-title">
+          <h2 id="category-members-title">Участники <span class="members-count">{{ category.usersEmails?.length ?? 0 }}</span></h2>
+          <ul class="members-list">
+            @for (email of category.usersEmails ?? []; track $index) {
+              <li><span class="member-icon" aria-hidden="true">{{ email.charAt(0).toUpperCase() }}</span><span>{{ email }}</span></li>
+            } @empty { <li class="empty-text">Участники не указаны.</li> }
+          </ul>
+        </section>
+      </article>
+      <aside class="details-meta" aria-label="Сведения о категории">
+        <h2>Сведения</h2>
+        <dl>
+          <div><dt>Дата создания</dt><dd><time [attr.datetime]="category.createdTime">{{ formatDate(category.createdTime) }}</time></dd></div>
+          <div><dt>Создатель</dt><dd>{{ category.creatorEmail?.trim() || 'Не указан' }}</dd></div>
+        </dl>
+      </aside>
+    </div>
+
+    <section class="category-reminders" aria-labelledby="category-reminders-title">
+      @let items = remindersState();
+      <div class="category-reminders-heading">
+        <h2 id="category-reminders-title">Напоминания категории
+          @if (items.kind === 'ready') { <span class="members-count">{{ items.reminders.length }}</span> }
+        </h2>
+        <p>Доступные вам напоминания этой категории.</p>
+      </div>
+      @if (items.kind === 'loading') {
+        <div class="category-reminders-state" role="status"><span class="loading-spinner" aria-hidden="true"></span><p>Загружаем напоминания…</p></div>
+      } @else if (items.kind === 'error') {
+        <div class="category-reminders-state" role="alert"><p>Не удалось загрузить напоминания категории.</p>
+          <button class="retry-button" type="button" (click)="retryReminders()">Попробовать снова</button>
+        </div>
+      } @else if (items.kind === 'ready') {
+        <ul class="category-reminders-grid">
+          @for (reminder of items.reminders; track reminder.id) {
+            <li><app-reminder-card [reminder]="reminder" /></li>
+          } @empty {
+            <li class="category-reminders-state">
+              <span class="empty-folder" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+                  <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+                </svg>
+              </span>
+              <p class="empty-title">Пока нет напоминаний</p>
+              <p>В этой категории пока нет доступных вам напоминаний.</p>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+</section>
+
+<dialog #categoryNavigationDialog class="navigation-dialog" aria-labelledby="category-navigation-title">
+  <div class="navigation-heading">
+    <div><h2 id="category-navigation-title">Категории</h2><p>Переключайтесь между категориями</p></div>
+    <button class="navigation-close" type="button" aria-label="Закрыть список категорий" (click)="closeNavigation()" autofocus>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+        stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+    </button>
+  </div>
+  <label class="navigation-search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+      stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4.5 4.5" /></svg>
+    <input type="search" [formControl]="navigationSearch" placeholder="Поиск категории…" aria-label="Поиск в списке категорий" />
+  </label>
+  <div class="navigation-content">
+    @if (navigationLoading()) { <p class="navigation-state" role="status">Загружаем категории…</p> }
+    @else if (navigationError(); as message) {
+      <div class="navigation-state" role="alert"><p>{{ message }}</p>
+        <button class="retry-button" type="button" (click)="loadNavigation()">Попробовать снова</button>
+      </div>
+    } @else {
+      <nav aria-label="Переключение категорий">
+        @for (category of filteredCategories(); track category.id) {
+          <a class="navigation-item" [routerLink]="['/categories', category.id]" (click)="closeNavigation()"
+            [attr.aria-current]="category.id === categoryId() ? 'page' : null">
+            <svg class="navigation-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+            </svg>
+            <span class="navigation-copy"><span class="navigation-item-title">{{ category.title || 'Без названия' }}</span></span>
+          </a>
+        } @empty {
+          <p class="navigation-state">{{ navigationSearch.value.trim() ? 'Ничего не найдено. Измените запрос.' : 'Категорий пока нет.' }}</p>
+        }
+      </nav>
+    }
+  </div>
+</dialog>

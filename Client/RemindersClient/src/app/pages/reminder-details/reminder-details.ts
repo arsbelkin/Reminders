@@ -37,8 +37,8 @@ type DetailState =
   templateUrl: './reminder-details.html',
   styleUrls: [
     '../../shared/reminder-badges.css',
-    './reminder-details.css',
-    './reminder-details-navigation.css',
+    '../../shared/details-page.css',
+    '../../shared/details-navigation.css',
   ],
 })
 export class ReminderDetails {

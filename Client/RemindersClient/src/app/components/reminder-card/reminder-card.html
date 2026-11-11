@@ -6,7 +6,11 @@
       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
     </svg>
-    <span>{{ reminder().categoryName || 'Без категории' }}</span>
+    @if (reminder().categoryId; as categoryId) {
+      <a [routerLink]="['/categories', categoryId]">{{ reminder().categoryName || 'Без категории' }}</a>
+    } @else {
+      <span>{{ reminder().categoryName || 'Без категории' }}</span>
+    }
   </div>
 
   <h3 class="card-title">
