@@ -1,9 +1,34 @@
 <section class="reminders-page" aria-labelledby="reminders-title">
   <div class="page-heading">
     <h1 id="reminders-title">Мои напоминания</h1>
-    @if (!isLoading() && !errorMessage()) {
-      <span class="reminders-count">{{ reminders().length }} всего</span>
-    }
+    <div class="page-actions">
+      @if (!isLoading() && !errorMessage()) {
+        <span class="reminders-count">{{ reminders().length }} всего</span>
+      }
+      <div class="view-switch" role="group" aria-label="Вид напоминаний">
+        <button class="view-button" type="button" aria-label="Карточки" title="Карточки"
+          [class.view-button--active]="viewMode() === 'cards'"
+          [attr.aria-pressed]="viewMode() === 'cards'"
+          (click)="viewMode.set('cards')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7" rx="1.5" />
+            <rect x="14" y="3" width="7" height="7" rx="1.5" />
+            <rect x="3" y="14" width="7" height="7" rx="1.5" />
+            <rect x="14" y="14" width="7" height="7" rx="1.5" />
+          </svg>
+        </button>
+        <button class="view-button" type="button" aria-label="Таблица" title="Таблица"
+          [class.view-button--active]="viewMode() === 'table'"
+          [attr.aria-pressed]="viewMode() === 'table'"
+          (click)="viewMode.set('table')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M3 9h18M3 15h18M10 3v18" />
+          </svg>
+        </button>
+      </div>
+    </div>
   </div>
 
   @if (isLoading()) {
@@ -31,6 +56,20 @@
         Попробовать снова
       </button>
     </div>
+  } @else if (reminders().length === 0) {
+    <div class="page-state">
+      <span class="state-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+          stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="3" width="15" height="18" rx="2" />
+          <path d="M9 3v18M3 7h4M3 12h4M3 17h4M12 8h5M12 12h5M12 16h3" />
+        </svg>
+      </span>
+      <h2 class="state-title">Напоминаний пока нет</h2>
+      <p class="state-description">Добавленные напоминания появятся здесь.</p>
+    </div>
+  } @else if (viewMode() === 'table') {
+    <app-reminder-table [reminders]="reminders()" />
   } @else {
     <div class="category-list">
       @for (category of categoryGroups(); track category.key; let index = $index) {
@@ -62,18 +101,6 @@
               </li>
             }
           </ul>
-        </div>
-      } @empty {
-        <div class="page-state">
-          <span class="state-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-              stroke-linecap="round" stroke-linejoin="round">
-              <rect x="5" y="3" width="15" height="18" rx="2" />
-              <path d="M9 3v18M3 7h4M3 12h4M3 17h4M12 8h5M12 12h5M12 16h3" />
-            </svg>
-          </span>
-          <h2 class="state-title">Напоминаний пока нет</h2>
-          <p class="state-description">Добавленные напоминания появятся здесь.</p>
         </div>
       }
     </div>

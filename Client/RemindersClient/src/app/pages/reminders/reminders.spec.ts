@@ -10,9 +10,9 @@ describe('Reminders', () => {
   let response: Subject<ReminderListViewDto[]>;
   const remindersApi = { apiV1RemindersGet$Json: vi.fn() };
   const workReminders: ReminderListViewDto[] = [
-    { id: 'work-1', title: 'Отчёт', categoryId: 'work', categoryName: 'Работа' },
-    { id: 'home-1', title: 'Покупки', categoryId: 'home', categoryName: 'Дом' },
-    { id: 'work-2', title: 'Встреча', categoryId: 'work', categoryName: 'Работа' },
+    { id: 'work-1', title: 'Отчёт', categoryId: 'work', categoryName: 'Работа', priority: 3, isCompleted: 0 },
+    { id: 'home-1', title: 'Покупки', categoryId: 'home', categoryName: 'Дом', priority: 1, isCompleted: 1 },
+    { id: 'work-2', title: 'Встреча', categoryId: 'work', categoryName: 'Работа', priority: 2, isCompleted: 0 },
   ];
 
   function finishLoading(reminders: ReminderListViewDto[]): HTMLElement {
@@ -24,6 +24,11 @@ describe('Reminders', () => {
 
   function panelFor(button: HTMLButtonElement): HTMLUListElement {
     return fixture.nativeElement.querySelector(`#${button.getAttribute('aria-controls')}`)!;
+  }
+
+  function selectView(root: HTMLElement, mode: 'Карточки' | 'Таблица'): void {
+    root.querySelector<HTMLButtonElement>(`.view-button[aria-label="${mode}"]`)!.click();
+    fixture.detectChanges();
   }
 
   beforeEach(async () => {
@@ -41,10 +46,12 @@ describe('Reminders', () => {
     await fixture.whenStable();
   });
 
-  it('shows loading before displaying category groups', () => {
+  it.each(['Карточки', 'Таблица'] as const)('shows loading before displaying %s', (mode) => {
     const root = fixture.nativeElement as HTMLElement;
+    selectView(root, mode);
     expect(root.querySelector('[role="status"]')?.textContent).toContain('Загружаем');
     expect(root.querySelector('.category-group')).toBeNull();
+    expect(root.querySelector('table')).toBeNull();
     expect(remindersApi.apiV1RemindersGet$Json).toHaveBeenCalledTimes(1);
   });
 
@@ -138,19 +145,90 @@ describe('Reminders', () => {
     expect(panelFor(workButton).getAttribute('aria-labelledby')).toBe(workButton.id);
   });
 
-  it('shows the empty state without empty category headers', () => {
-    const root = finishLoading([]);
+  it('switches from icon-only controls to an ungrouped table with the same fields', () => {
+    const root = finishLoading(workReminders);
+    const cardsButton = root.querySelector<HTMLButtonElement>('[aria-label="Карточки"]')!;
+    const tableButton = root.querySelector<HTMLButtonElement>('[aria-label="Таблица"]')!;
+
+    expect(cardsButton.textContent?.trim()).toBe('');
+    expect(tableButton.textContent?.trim()).toBe('');
+    expect(cardsButton.querySelector('svg')).not.toBeNull();
+    expect(tableButton.querySelector('svg')).not.toBeNull();
+    expect(cardsButton.getAttribute('aria-pressed')).toBe('true');
+    expect(tableButton.getAttribute('aria-pressed')).toBe('false');
+
+    selectView(root, 'Таблица');
+
+    expect(cardsButton.getAttribute('aria-pressed')).toBe('false');
+    expect(tableButton.getAttribute('aria-pressed')).toBe('true');
     expect(root.querySelector('.category-group')).toBeNull();
+    expect(root.querySelector('app-reminder-card')).toBeNull();
+    expect([...root.querySelectorAll('thead th')].map((cell) => cell.textContent))
+      .toEqual(['Название', 'Категория', 'Приоритет', 'Статус']);
+
+    const rows = root.querySelectorAll<HTMLTableRowElement>('tbody tr');
+    expect([...rows].map((row) => row.cells[0].textContent?.trim()))
+      .toEqual(['Отчёт', 'Покупки', 'Встреча']);
+    expect([...rows].map((row) => row.cells[1].textContent?.trim()))
+      .toEqual(['Работа', 'Дом', 'Работа']);
+    expect([...rows].map((row) => row.cells[2].textContent?.trim()))
+      .toEqual(['Высокий', 'Низкий', 'Средний']);
+    expect([...rows].map((row) => row.cells[3].textContent?.trim()))
+      .toEqual(['Не выполнено', 'Выполнено', 'Не выполнено']);
+    expect(remindersApi.apiV1RemindersGet$Json).toHaveBeenCalledTimes(1);
+  });
+
+  it('includes collapsed categories in the table and restores their state when returning to cards', () => {
+    const root = finishLoading(workReminders);
+    root.querySelector<HTMLButtonElement>('.category-toggle')!.click();
+    fixture.detectChanges();
+
+    selectView(root, 'Таблица');
+    expect(root.querySelectorAll('tbody tr')).toHaveLength(3);
+    selectView(root, 'Карточки');
+
+    const [workButton, homeButton] = root.querySelectorAll<HTMLButtonElement>('.category-toggle');
+    expect(workButton.getAttribute('aria-expanded')).toBe('false');
+    expect(panelFor(workButton).hidden).toBe(true);
+    expect(panelFor(homeButton).hidden).toBe(false);
+    expect(root.querySelector('table')).toBeNull();
+    expect(remindersApi.apiV1RemindersGet$Json).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the same fallback labels and completion states in the table', () => {
+    const root = finishLoading([
+      { id: '1' },
+      { id: '2', title: 'Задача', categoryName: 'Личное', priority: 4, isCompleted: 1 },
+      { id: '3', title: 'Проверка', priority: 99, isCompleted: 0 },
+    ]);
+    selectView(root, 'Таблица');
+
+    const rows = root.querySelectorAll<HTMLTableRowElement>('tbody tr');
+    expect([...rows[0].cells].map((cell) => cell.textContent?.trim()))
+      .toEqual(['Без названия', 'Без категории', 'Без приоритета', 'Не выполнено']);
+    expect(rows[1].querySelector('.priority-badge')?.textContent).toBe('Критический');
+    expect(rows[1].querySelector('.completion-status--completed')).not.toBeNull();
+    expect(rows[2].querySelector('.priority-badge')?.textContent).toBe('Неизвестен');
+    expect(rows[2].querySelector('.completion-status--completed')).toBeNull();
+  });
+
+  it.each(['Карточки', 'Таблица'] as const)('shows the empty state in %s mode', (mode) => {
+    const root = finishLoading([]);
+    selectView(root, mode);
+    expect(root.querySelector('.category-group')).toBeNull();
+    expect(root.querySelector('table')).toBeNull();
     expect(root.querySelector('.state-title')?.textContent).toBe('Напоминаний пока нет');
   });
 
-  it('shows the request error instead of category groups', () => {
+  it.each(['Карточки', 'Таблица'] as const)('shows the request error in %s mode', (mode) => {
     response.error({ status: 500 });
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
+    selectView(root, mode);
     expect(root.querySelector('[role="alert"]')?.textContent)
       .toContain('Не удалось загрузить напоминания.');
     expect(root.querySelector('.category-group')).toBeNull();
+    expect(root.querySelector('table')).toBeNull();
   });
 });

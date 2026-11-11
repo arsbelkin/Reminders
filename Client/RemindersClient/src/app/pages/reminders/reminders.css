@@ -41,6 +41,41 @@ h1 {
   line-height: 1.4;
 }
 
+.page-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.view-switch {
+  display: inline-flex;
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.view-button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  color: #64748b;
+  background: transparent;
+  cursor: pointer;
+}
+
+.view-button:hover { background: #f1f5f9; }
+.view-button--active, .view-button--active:hover { color: #2563eb; background: #eff6ff; }
+.view-button svg { width: 19px; height: 19px; }
+
+button:focus-visible { outline: 3px solid #93b4ff; outline-offset: 3px; }
+
 .category-list {
   display: flex;
   flex-direction: column;
@@ -78,11 +113,6 @@ h1 {
 
 .category-toggle:hover .category-name {
   color: #2563eb;
-}
-
-.category-toggle:focus-visible {
-  outline: 3px solid #93b4ff;
-  outline-offset: 5px;
 }
 
 .category-icon {
@@ -213,11 +243,6 @@ h1 {
   background: #1d4ed8;
 }
 
-.retry-button:focus-visible {
-  outline: 3px solid #93b4ff;
-  outline-offset: 3px;
-}
-
 .retry-button svg {
   width: 16px;
   height: 16px;
@@ -245,6 +270,8 @@ h1 {
 @media (max-width: 600px) {
   .reminders-page { padding: 28px 20px 40px; }
   .page-heading { margin-bottom: 22px; }
+  .page-actions { width: 100%; justify-content: flex-end; }
+  .reminders-count { margin-right: auto; }
   .category-list { gap: 28px; }
   .reminders-grid { gap: 16px; }
   .page-state { min-height: 260px; }

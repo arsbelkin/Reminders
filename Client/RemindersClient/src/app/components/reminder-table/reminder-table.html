@@ -1,0 +1,46 @@
+<div class="table-scroll" role="region" aria-label="Таблица напоминаний" tabindex="0">
+  <table class="reminders-table">
+    <caption class="visually-hidden">Мои напоминания</caption>
+    <colgroup>
+      <col class="title-column" />
+      <col class="category-column" />
+      <col class="priority-column" />
+      <col class="status-column" />
+    </colgroup>
+    <thead>
+      <tr>
+        <th scope="col">Название</th>
+        <th scope="col">Категория</th>
+        <th scope="col">Приоритет</th>
+        <th scope="col">Статус</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (reminder of reminders(); track reminder.id) {
+        <tr [attr.data-priority]="reminder.priority ?? 0">
+          <th scope="row" class="reminder-title" [class.reminder-title--completed]="reminder.isCompleted === 1">
+            {{ reminder.title || 'Без названия' }}
+          </th>
+          <td class="reminder-category">{{ reminder.categoryName || 'Без категории' }}</td>
+          <td>
+            <span class="priority-badge">{{ priorityLabels[reminder.priority ?? 0] ?? 'Неизвестен' }}</span>
+          </td>
+          <td>
+            <span class="completion-status" [class.completion-status--completed]="reminder.isCompleted === 1">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="10" cy="10" r="7.25" />
+                @if (reminder.isCompleted === 1) {
+                  <path d="m6.75 10 2.1 2.1 4.4-4.4" />
+                } @else {
+                  <path d="M10 6v4l2.5 1.5" />
+                }
+              </svg>
+              {{ reminder.isCompleted === 1 ? 'Выполнено' : 'Не выполнено' }}
+            </span>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

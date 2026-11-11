@@ -1,5 +1,6 @@
 import { Component, input } from '@angular/core';
 import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
+import { PRIORITY_LABELS } from '../../shared/reminder-labels';
 
 @Component({
   imports: [],
@@ -10,11 +11,5 @@ import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
 export class ReminderCard {
   readonly reminder = input.required<ReminderListViewDto>();
 
-  readonly priorityLabels: Record<number, string> = {
-    0: 'Без приоритета',
-    1: 'Низкий',
-    2: 'Средний',
-    3: 'Высокий',
-    4: 'Критический',
-  };
+  readonly priorityLabels = PRIORITY_LABELS;
 }

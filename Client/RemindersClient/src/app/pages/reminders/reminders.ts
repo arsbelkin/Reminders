@@ -3,6 +3,7 @@ import { finalize } from 'rxjs';
 import { RemindersService } from '../../api/services';
 import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
 import { ReminderCard } from '../../components/reminder-card/reminder-card';
+import { ReminderTable } from '../../components/reminder-table/reminder-table';
 
 interface ReminderCategoryGroup {
   key: string;
@@ -11,7 +12,7 @@ interface ReminderCategoryGroup {
 }
 
 @Component({
-  imports: [ReminderCard],
+  imports: [ReminderCard, ReminderTable],
   selector: 'app-reminders',
   styleUrl: './reminders.css',
   templateUrl: './reminders.html',
@@ -22,6 +23,7 @@ export class Reminders implements OnInit {
   readonly reminders = signal<ReminderListViewDto[]>([]);
   readonly isLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly viewMode = signal<'cards' | 'table'>('cards');
 
   private readonly collapsedCategoryKeys = signal<ReadonlySet<string>>(new Set());
 

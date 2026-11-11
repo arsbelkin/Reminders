@@ -1,0 +1,73 @@
+@import '../../shared/reminder-badges.css';
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.table-scroll:focus-visible {
+  outline: 3px solid #93b4ff;
+  outline-offset: 3px;
+}
+
+.reminders-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  table-layout: fixed;
+  text-align: left;
+}
+
+.title-column { width: 38%; }
+.category-column { width: 20%; }
+.priority-column, .status-column { width: 21%; }
+
+th, td {
+  padding: 20px 22px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+thead th {
+  padding-top: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #64748b;
+  background: #f8fafc;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+tbody tr + tr {
+  border-top: 1px solid #f1f5f9;
+}
+
+.reminder-title {
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.reminder-title--completed, .reminder-category {
+  color: #64748b;
+}
+
+.reminder-category {
+  font-size: 13px;
+}
+
+.priority-badge, .completion-status {
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  th, td { padding: 16px; }
+}

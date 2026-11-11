@@ -1,0 +1,80 @@
+[data-priority] {
+  --priority-color: #475569;
+  --priority-background: #f1f5f9;
+  --priority-dot: #94a3b8;
+}
+
+[data-priority='1'] {
+  --priority-color: #1d4ed8;
+  --priority-background: #eff6ff;
+  --priority-dot: #3b82f6;
+}
+
+[data-priority='2'] {
+  --priority-color: #854d0e;
+  --priority-background: #fefce8;
+  --priority-dot: #ca8a04;
+}
+
+[data-priority='3'] {
+  --priority-color: #9a3412;
+  --priority-background: #fff7ed;
+  --priority-dot: #f97316;
+}
+
+[data-priority='4'] {
+  --priority-color: #be123c;
+  --priority-background: #fff1f2;
+  --priority-dot: #f43f5e;
+}
+
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 9px;
+  border-radius: 6px;
+  color: var(--priority-color);
+  background: var(--priority-background);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.priority-badge::before {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--priority-dot);
+  content: '';
+}
+
+.completion-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.completion-status svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+.completion-status--completed {
+  color: #15803d;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
