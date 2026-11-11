@@ -51,25 +51,44 @@
           </svg>
         </button>
       </div>
+      <button class="create-category-button" type="button" (click)="categoryCreateWindow.open()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        Новая категория
+      </button>
     </div>
   </div>
 
   <form class="search-toolbar" role="search" [formGroup]="searchForm" (ngSubmit)="loadReminders()">
     <label class="search-label" for="reminder-search">Поиск по названию</label>
     <div class="search-field">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-        stroke-linecap="round" aria-hidden="true">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
         <circle cx="10.5" cy="10.5" r="6.5" />
         <path d="m16 16 4.5 4.5" />
       </svg>
-      <input id="reminder-search" type="search" placeholder="Поиск по названию напоминания…"
-        formControlName="searchText" />
+      <input
+        id="reminder-search"
+        type="search"
+        placeholder="Поиск по названию напоминания…"
+        formControlName="searchText"
+      />
     </div>
     <button class="search-submit" type="submit" [disabled]="isLoading()">Найти</button>
     <button
       class="filter-button"
       type="button"
-      [attr.aria-label]="'Подробные фильтры' + (activeFiltersCount() ? ', выбрано: ' + activeFiltersCount() : '')"
+      [attr.aria-label]="
+        'Подробные фильтры' + (activeFiltersCount() ? ', выбрано: ' + activeFiltersCount() : '')
+      "
       title="Подробные фильтры"
       [class.filter-button--active]="activeFiltersCount() > 0"
       [disabled]="isLoading() || categoriesLoading() || categoriesError() !== null"
@@ -149,7 +168,7 @@
         Попробовать снова
       </button>
     </div>
-  } @else if (reminders().length === 0) {
+  } @else if (reminders().length === 0 && (viewMode() === 'table' || categoryGroups().length === 0)) {
     <div class="page-state">
       <span class="state-icon" aria-hidden="true">
         <svg
@@ -164,8 +183,10 @@
           <path d="M9 3v18M3 7h4M3 12h4M3 17h4M12 8h5M12 12h5M12 16h3" />
         </svg>
       </span>
-      <h2 class="state-title">Напоминаний пока нет</h2>
-      <p class="state-description">Добавленные напоминания появятся здесь.</p>
+      <h2 class="state-title">{{ hasActiveQuery() ? 'Ничего не найдено' : 'Напоминаний пока нет' }}</h2>
+      <p class="state-description">
+        {{ hasActiveQuery() ? 'Попробуйте изменить запрос или фильтры.' : 'Добавленные напоминания появятся здесь.' }}
+      </p>
     </div>
   } @else if (viewMode() === 'table') {
     <app-reminder-table [reminders]="reminders()" [(sorting)]="tableSort" />
@@ -225,6 +246,20 @@
               <li>
                 <app-reminder-card [reminder]="reminder" />
               </li>
+            } @empty {
+              <li class="category-empty">
+                <span class="category-empty-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+                    <path d="M9 13h6M12 10v6" />
+                  </svg>
+                </span>
+                <div>
+                  <p class="category-empty-title">Пока нет напоминаний</p>
+                  <p class="category-empty-description">Здесь появятся напоминания из этой категории.</p>
+                </div>
+              </li>
             }
           </ul>
         </div>
@@ -232,3 +267,8 @@
     </div>
   }
 </section>
+
+<app-category-create
+  #categoryCreateWindow
+  (created)="loadCategories()"
+/>

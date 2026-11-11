@@ -12,6 +12,8 @@ import {
   ReminderFiltersValue,
 } from '../../components/reminder-filters/reminder-filters';
 
+import { CategoryCreate } from '../../components/category-create/category-create';
+
 interface ReminderCategoryGroup {
   key: string;
   name: string;
@@ -19,9 +21,9 @@ interface ReminderCategoryGroup {
 }
 
 @Component({
-  imports: [ReminderCard, ReminderTable, ReactiveFormsModule, ReminderFilters],
+  imports: [ReminderCard, ReminderTable, ReactiveFormsModule, ReminderFilters, CategoryCreate],
   selector: 'app-reminders',
-  styleUrls: ['./reminders.css', './reminders-search.css'],
+  styleUrls: ['./reminders.css', './reminders-search.css', './reminders-categories.css'],
   templateUrl: './reminders.html',
 })
 export class Reminders implements OnInit {
@@ -39,6 +41,7 @@ export class Reminders implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   readonly viewMode = signal<'cards' | 'table'>('cards');
   readonly tableSort = signal<ReminderTableSort | null>(null);
+  private readonly appliedSearchText = signal('');
 
   private readonly collapsedCategoryKeys = signal<ReadonlySet<string>>(new Set());
 
@@ -47,6 +50,7 @@ export class Reminders implements OnInit {
   readonly categories = signal<CategoryListViewDto[]>([]);
   readonly categoriesLoading = signal(false);
   readonly categoriesError = signal<string | null>(null);
+  private categoriesReloadRequested = false;
 
   readonly appliedFilters = signal<ReminderFiltersValue>({
     categoryIds: [],
@@ -56,11 +60,40 @@ export class Reminders implements OnInit {
 
   readonly activeFiltersCount = computed(() => {
     const filters = this.appliedFilters();
-    return filters.categoryIds.length + filters.priorityTypes.length + (filters.completedStatus !== null ? 1 : 0);
+    return (
+      filters.categoryIds.length +
+      filters.priorityTypes.length +
+      (filters.completedStatus !== null ? 1 : 0)
+    );
   });
+
+  readonly hasActiveQuery = computed(
+    () => this.appliedSearchText().length > 0 || this.activeFiltersCount() > 0,
+  );
 
   readonly categoryGroups = computed(() => {
     const groups = new Map<string, ReminderCategoryGroup>();
+    const filters = this.appliedFilters();
+    const showEmptyCategories = !this.appliedSearchText() &&
+      filters.priorityTypes.length === 0 && filters.completedStatus === null;
+
+    if (showEmptyCategories) {
+      const selectedCategoryIds = new Set(filters.categoryIds);
+
+      for (const category of this.categories()) {
+        const id = category.id?.trim();
+        if (!id || (selectedCategoryIds.size > 0 && !selectedCategoryIds.has(id))) {
+          continue;
+        }
+
+        const key = `id:${id}`;
+        groups.set(key, {
+          key,
+          name: category.title?.trim() || 'Без названия',
+          reminders: [],
+        });
+      }
+    }
 
     for (const reminder of this.reminders()) {
       const categoryId = reminder.categoryId?.trim();
@@ -114,17 +147,19 @@ export class Reminders implements OnInit {
 
     this.isLoading.set(true);
     this.errorMessage.set(null);
+    const searchText = this.searchControl.value.trim();
 
     this.remindersApi
       .apiV1RemindersSearchPost$Json({
         body: {
           ...this.appliedFilters(),
-          searchText: this.searchControl.value.trim() || null,
+          searchText: searchText || null,
         },
       })
       .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: (reminders) => {
+          this.appliedSearchText.set(searchText);
           this.reminders.set(reminders);
         },
         error: (error) => {
@@ -139,6 +174,7 @@ export class Reminders implements OnInit {
 
   loadCategories(): void {
     if (this.categoriesLoading()) {
+      this.categoriesReloadRequested = true;
       return;
     }
 
@@ -147,7 +183,13 @@ export class Reminders implements OnInit {
 
     this.categoriesApi
       .apiV1CategoriesGet$Json()
-      .pipe(finalize(() => this.categoriesLoading.set(false)))
+      .pipe(finalize(() => {
+        this.categoriesLoading.set(false);
+        if (this.categoriesReloadRequested) {
+          this.categoriesReloadRequested = false;
+          this.loadCategories();
+        }
+      }))
       .subscribe({
         next: (categories) => {
           this.categories.set(categories);

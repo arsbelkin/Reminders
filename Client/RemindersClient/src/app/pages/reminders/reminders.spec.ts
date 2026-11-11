@@ -1,15 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { Subject, of } from 'rxjs';
 import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
 import { CategoriesService, RemindersService } from '../../api/services';
 import { Reminders } from './reminders';
+import { CategoryCreate } from '../../components/category-create/category-create';
 
 describe('Reminders', () => {
   let component: Reminders;
   let fixture: ComponentFixture<Reminders>;
   let response: Subject<ReminderListViewDto[]>;
   const remindersApi = { apiV1RemindersSearchPost$Json: vi.fn() };
-  const categoriesApi = { apiV1CategoriesGet$Json: () => of([]) };
+  const categoriesApi = { apiV1CategoriesGet$Json: vi.fn() };
   const workReminders: ReminderListViewDto[] = [
     { id: 'work-1', title: 'Отчёт', categoryId: 'work', categoryName: 'Работа', priority: 3, isCompleted: 0 },
     { id: 'home-1', title: 'Покупки', categoryId: 'home', categoryName: 'Дом', priority: 1, isCompleted: 1 },
@@ -36,6 +38,8 @@ describe('Reminders', () => {
     response = new Subject<ReminderListViewDto[]>();
     remindersApi.apiV1RemindersSearchPost$Json.mockReset();
     remindersApi.apiV1RemindersSearchPost$Json.mockReturnValue(response.asObservable());
+    categoriesApi.apiV1CategoriesGet$Json.mockReset();
+    categoriesApi.apiV1CategoriesGet$Json.mockReturnValue(of([]));
 
     await TestBed.configureTestingModule({
       imports: [Reminders],
@@ -318,6 +322,134 @@ describe('Reminders', () => {
     expect(root.querySelector('.filter-count')?.textContent).toBe('3');
     filteredResponse.next([workReminders[0]]);
     filteredResponse.complete();
+  });
+
+  it('shows empty categories without reminders and lets them collapse independently', () => {
+    const root = finishLoading([]);
+    component.categories.set([
+      { id: 'work', title: 'Работа' },
+      { id: 'study', title: 'Учёба' },
+    ]);
+    fixture.detectChanges();
+
+    const groups = root.querySelectorAll('.category-group');
+    expect(groups).toHaveLength(2);
+    expect(root.querySelector('.page-state')).toBeNull();
+    expect([...root.querySelectorAll('.category-count')].map((count) => count.textContent)).toEqual(['0', '0']);
+    expect(root.querySelectorAll('.category-empty')).toHaveLength(2);
+
+    const [workButton, studyButton] = root.querySelectorAll<HTMLButtonElement>('.category-toggle');
+    workButton.click();
+    fixture.detectChanges();
+    expect(panelFor(workButton).hidden).toBe(true);
+    expect(panelFor(studyButton).hidden).toBe(false);
+  });
+
+  it('adds reminders to known categories while retaining uncategorized and unknown categories', () => {
+    component.categories.set([
+      { id: 'work', title: 'Работа' },
+      { id: 'study', title: 'Учёба' },
+    ]);
+    finishLoading([...workReminders, { id: 'personal', title: 'Книга' }]);
+
+    expect(component.categoryGroups().map(({ key, reminders }) => [key, reminders.length]))
+      .toEqual([['id:work', 2], ['id:study', 0], ['id:home', 1], ['uncategorized', 1]]);
+    expect(component.reminders()).toHaveLength(4);
+  });
+
+  it('reloads and shows newly created empty categories after the dialog emits created', () => {
+    const root = finishLoading([]);
+    categoriesApi.apiV1CategoriesGet$Json.mockReturnValue(of([{ id: 'new', title: 'Новая категория' }]));
+
+    const dialog = fixture.debugElement.query(By.directive(CategoryCreate)).componentInstance as CategoryCreate;
+    dialog.created.emit();
+    fixture.detectChanges();
+
+    expect(categoriesApi.apiV1CategoriesGet$Json).toHaveBeenCalledTimes(2);
+    expect(root.querySelector('.category-name')?.textContent).toBe('Новая категория');
+    expect(root.querySelector('.category-empty-title')?.textContent).toBe('Пока нет напоминаний');
+    expect(root.querySelector('.category-count')?.textContent).toBe('0');
+  });
+
+  it('refreshes after creating a category even when an older categories request is still pending', () => {
+    const root = finishLoading([]);
+    const pendingCategories = new Subject<{ id: string; title: string }[]>();
+    categoriesApi.apiV1CategoriesGet$Json
+      .mockReturnValueOnce(pendingCategories.asObservable())
+      .mockReturnValueOnce(of([{ id: 'new', title: 'Новая категория' }]));
+    component.loadCategories();
+
+    const dialog = fixture.debugElement.query(By.directive(CategoryCreate)).componentInstance as CategoryCreate;
+    dialog.created.emit();
+    expect(categoriesApi.apiV1CategoriesGet$Json).toHaveBeenCalledTimes(2);
+
+    pendingCategories.next([]);
+    pendingCategories.complete();
+    fixture.detectChanges();
+
+    expect(categoriesApi.apiV1CategoriesGet$Json).toHaveBeenCalledTimes(3);
+    expect(component.categoriesLoading()).toBe(false);
+    expect(root.querySelector('.category-name')?.textContent).toBe('Новая категория');
+  });
+
+  it('shows only selected empty categories when filtering by category alone', () => {
+    const root = finishLoading([]);
+    component.categories.set([{ id: 'work', title: 'Работа' }, { id: 'study', title: 'Учёба' }]);
+    remindersApi.apiV1RemindersSearchPost$Json.mockReturnValue(of([]));
+
+    component.applyFilters({ categoryIds: ['study'], priorityTypes: [], completedStatus: null });
+    fixture.detectChanges();
+
+    expect([...root.querySelectorAll('.category-name')].map((name) => name.textContent)).toEqual(['Учёба']);
+    expect(root.querySelectorAll('.category-empty')).toHaveLength(1);
+  });
+
+  it.each([
+    { categoryIds: [], priorityTypes: [3], completedStatus: null },
+    { categoryIds: [], priorityTypes: [], completedStatus: 0 },
+    { categoryIds: ['study'], priorityTypes: [], completedStatus: 1 },
+  ])('hides empty categories for reminder criteria %j', (filters) => {
+    const root = finishLoading([]);
+    component.categories.set([{ id: 'study', title: 'Учёба' }]);
+    remindersApi.apiV1RemindersSearchPost$Json.mockReturnValue(of([]));
+
+    component.applyFilters(filters);
+    fixture.detectChanges();
+
+    expect(root.querySelector('.category-group')).toBeNull();
+    expect(root.querySelector('.state-title')?.textContent).toBe('Ничего не найдено');
+  });
+
+  it('uses the submitted search rather than an unsubmitted draft to show empty categories', () => {
+    const root = finishLoading([]);
+    component.categories.set([{ id: 'study', title: 'Учёба' }]);
+    component.searchControl.setValue('Несуществующее напоминание');
+    fixture.detectChanges();
+    expect(root.querySelectorAll('.category-empty')).toHaveLength(1);
+
+    remindersApi.apiV1RemindersSearchPost$Json.mockReturnValue(of([]));
+    component.loadReminders();
+    fixture.detectChanges();
+    expect(root.querySelector('.category-group')).toBeNull();
+    expect(root.querySelector('.state-title')?.textContent).toBe('Ничего не найдено');
+
+    component.searchControl.setValue('');
+    fixture.detectChanges();
+    expect(root.querySelector('.category-group')).toBeNull();
+    component.loadReminders();
+    fixture.detectChanges();
+    expect(root.querySelectorAll('.category-empty')).toHaveLength(1);
+  });
+
+  it('keeps the table empty when only empty categories exist', () => {
+    const root = finishLoading([]);
+    component.categories.set([{ id: 'study', title: 'Учёба' }]);
+    fixture.detectChanges();
+    selectView(root, 'Таблица');
+
+    expect(root.querySelector('.category-group')).toBeNull();
+    expect(root.querySelector('table')).toBeNull();
+    expect(root.querySelector('.state-title')?.textContent).toBe('Напоминаний пока нет');
   });
 
   it.each(['Карточки', 'Таблица'] as const)('shows the empty state in %s mode', (mode) => {
