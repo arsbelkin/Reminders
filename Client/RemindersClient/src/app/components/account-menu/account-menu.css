@@ -1,0 +1,12 @@
+:host { position: relative; display: block; flex-shrink: 0; }
+.account-button { display: grid; place-items: center; box-sizing: border-box; width: 42px; height: 42px; padding: 0; border: 1px solid #d8e5fc; border-radius: 50%; color: #4b78cb; background: #eff6ff; overflow: hidden; cursor: pointer; }
+.account-button:hover, .account-button[aria-expanded='true'] { border-color: #93b4ff; background: #e3eeff; box-shadow: 0 0 0 3px #2563eb12; }
+.account-button:focus-visible { outline: 3px solid #93b4ff; outline-offset: 3px; }
+.account-button img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.default-avatar { width: 25px; height: 25px; }
+.account-options { position: absolute; z-index: 30; top: calc(100% + 12px); right: 0; box-sizing: border-box; width: 244px; max-width: calc(100vw - 40px); padding: 8px; border: 1px solid #e2e8f0; border-radius: 14px; color: #334155; background: #fff; box-shadow: 0 12px 36px #0f172a1f; }
+.menu-heading { margin: 8px 10px 12px; color: #64748b; font-size: 11px; font-weight: 600; }
+.account-option { display: flex; align-items: center; gap: 11px; width: 100%; min-height: 44px; padding: 10px; border: 0; border-radius: 9px; color: #64748b; background: transparent; font: inherit; font-size: 13px; text-align: left; cursor: default; }
+.account-option svg { flex-shrink: 0; width: 19px; height: 19px; color: #94a3b8; }
+.soon-label { margin-left: auto; padding: 3px 6px; border-radius: 5px; color: #94a3b8; background: #f1f5f9; font-size: 10px; }
+.menu-divider { height: 1px; margin: 6px 10px; background: #f1f5f9; }

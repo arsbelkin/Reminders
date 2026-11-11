@@ -18,6 +18,9 @@
 
     <span class="header__name">Reminders</span>
   </div>
+  @if (tokenStorage.token()) {
+    <app-account-menu />
+  }
 </header>
 
 <main class="page-content">
