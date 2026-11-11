@@ -85,7 +85,7 @@ public sealed class AuthService : IAuthService
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Role, user.IsAdmin ? "Admin" : "User")
             }),
-            Expires = DateTime.UtcNow.AddMinutes(15),
+            Expires = DateTime.UtcNow.AddHours(1),
             Issuer = _configuration["JWT:Issuer"],
             Audience = _configuration["JWT:Audience"],
             SigningCredentials =
