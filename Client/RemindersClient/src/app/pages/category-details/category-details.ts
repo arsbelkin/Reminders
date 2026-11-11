@@ -1,5 +1,5 @@
 import { Component, DestroyRef, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subject, catchError, combineLatest, distinctUntilChanged, finalize, map, of, shareReplay, startWith, switchMap } from 'rxjs';
@@ -58,12 +58,14 @@ export class CategoryDetails {
 
   readonly categoryId = toSignal(this.routeId, {initialValue: this.route.snapshot.paramMap.get('id') ?? ''});
   readonly state = toSignal(this.categoryState, {initialValue: {kind: 'loading'} as CategoryState});
+  readonly showCompleted = signal(false);
+  private readonly completedChanges = toObservable(this.showCompleted);
   readonly remindersState = toSignal(combineLatest([
-    this.categoryState, this.reloadReminders.pipe(startWith(undefined)),
+    this.categoryState, this.reloadReminders.pipe(startWith(undefined)), this.completedChanges,
   ]).pipe(
-    switchMap(([state]) => state.kind !== 'ready'
+    switchMap(([state, , showCompleted]) => state.kind !== 'ready'
       ? of<CategoryRemindersState>({kind: 'idle'})
-      : this.remindersApi.apiV1RemindersSearchPost$Json({body: {categoryIds: [state.id]}}).pipe(
+      : this.remindersApi.apiV1RemindersSearchPost$Json({body: {categoryIds: [state.id], completedStatus: showCompleted ? null : 0}}).pipe(
         map(reminders => ({kind: 'ready', reminders}) as CategoryRemindersState),
         catchError(() => of<CategoryRemindersState>({kind: 'error'})),
         startWith<CategoryRemindersState>({kind: 'loading'}),

@@ -96,7 +96,7 @@ export class Reminders implements OnInit {
   readonly appliedFilters = signal<ReminderFiltersValue>({
     categoryIds: [],
     priorityTypes: [],
-    completedStatus: null,
+    completedStatus: 0,
   });
 
   readonly activeFiltersCount = computed(() => {
@@ -104,7 +104,7 @@ export class Reminders implements OnInit {
     return (
       filters.categoryIds.length +
       filters.priorityTypes.length +
-      (filters.completedStatus !== null ? 1 : 0)
+      (filters.completedStatus === 1 ? 1 : 0)
     );
   });
 
@@ -118,7 +118,7 @@ export class Reminders implements OnInit {
     const showEmptyCategories =
       !this.appliedSearchText() &&
       filters.priorityTypes.length === 0 &&
-      filters.completedStatus === null;
+      filters.completedStatus !== 1;
 
     if (showEmptyCategories) {
       const selectedCategoryIds = new Set(filters.categoryIds);
@@ -253,5 +253,9 @@ export class Reminders implements OnInit {
 
     this.appliedFilters.set(values);
     this.loadReminders();
+  }
+
+  toggleCompleted(): void {
+    this.applyFilters({...this.appliedFilters(), completedStatus: this.appliedFilters().completedStatus === 0 ? null : 0});
   }
 }

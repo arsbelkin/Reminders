@@ -66,6 +66,11 @@
           @if (items.kind === 'ready') { <span class="members-count">{{ items.reminders.length }}</span> }
         </h2>
         <p>Доступные вам напоминания этой категории.</p>
+        <button class="completed-toggle" type="button" [attr.aria-pressed]="showCompleted()"
+          (click)="showCompleted.set(!showCompleted())">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>
+          Показывать завершённые
+        </button>
       </div>
       @if (items.kind === 'loading') {
         <div class="category-reminders-state" role="status"><span class="loading-spinner" aria-hidden="true"></span><p>Загружаем напоминания…</p></div>
@@ -84,8 +89,8 @@
                   <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
                 </svg>
               </span>
-              <p class="empty-title">Пока нет напоминаний</p>
-              <p>В этой категории пока нет доступных вам напоминаний.</p>
+              <p class="empty-title">{{ showCompleted() ? 'Пока нет напоминаний' : 'Нет незавершённых напоминаний' }}</p>
+              <p>Попробуйте изменить отображение завершённых напоминаний.</p>
             </li>
           }
         </ul>

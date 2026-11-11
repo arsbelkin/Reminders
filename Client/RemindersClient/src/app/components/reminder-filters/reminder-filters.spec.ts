@@ -65,7 +65,7 @@ describe('ReminderFilters', () => {
     root.querySelector<HTMLButtonElement>('.reset-button')!.click();
     fixture.detectChanges();
 
-    expect(component.form.getRawValue()).toEqual({ categoryIds: [], priorityTypes: [], completedStatus: null });
+    expect(component.form.getRawValue()).toEqual({ categoryIds: [], priorityTypes: [], completedStatus: 0 });
     expect(applied).toEqual({ categoryIds: ['work'], priorityTypes: [4], completedStatus: 1 });
     expect(onApply).not.toHaveBeenCalled();
     component.setValues(applied);

@@ -1,0 +1,9 @@
+.completion-toolbar { display: flex; margin: -8px 0 24px; }
+.completed-toggle, .complete-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 10px 14px; border: 1px solid #dbe3ef; border-radius: 9px; background: #fff; color: #64748b; font-size: 13px; font-weight: 600; line-height: 1.4; }
+.completed-toggle svg, .complete-button svg { width: 18px; height: 18px; flex-shrink: 0; }
+.completed-toggle:hover:enabled { border-color: #a5b4fc; color: #4f46e5; }
+.completed-toggle[aria-pressed="true"] { color: #4338ca; background: #eef2ff; border-color: #c7d2fe; }
+.complete-button { color: #fff; background: #059669; border-color: #059669; }
+.complete-button:hover:enabled { background: #047857; border-color: #047857; }
+.completed-toggle:disabled, .complete-button:disabled { opacity: .6; cursor: wait; }
+.completion-error { padding: 12px 16px; border: 1px solid #fecaca; border-radius: 10px; background: #fef2f2; color: #b91c1c; font-size: 13px; line-height: 1.6; }

@@ -57,6 +57,26 @@ describe('Reminders', () => {
     await fixture.whenStable();
   });
 
+  it('hides completed by default and toggles them without losing other filters', () => {
+    expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenLastCalledWith({
+      body: {categoryIds: [], priorityTypes: [], completedStatus: 0, searchText: null},
+    });
+    const root = finishLoading([]);
+    remindersApi.apiV1RemindersSearchPost$Json.mockReturnValue(of([]));
+    component.applyFilters({categoryIds: ['work'], priorityTypes: [3], completedStatus: 0});
+    const toggle = root.querySelector<HTMLButtonElement>('.completed-toggle')!;
+    toggle.click();
+    fixture.detectChanges();
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+    expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenLastCalledWith({
+      body: {categoryIds: ['work'], priorityTypes: [3], completedStatus: null, searchText: null},
+    });
+    toggle.click();
+    fixture.detectChanges();
+    expect(toggle.getAttribute('aria-pressed')).toBe('false');
+    expect(component.appliedFilters().completedStatus).toBe(0);
+  });
+
   it('toggles creation choices from the icon button', () => {
     const root = finishLoading([]);
     const trigger = root.querySelector<HTMLButtonElement>('.create-button')!;
@@ -361,7 +381,7 @@ describe('Reminders', () => {
 
     expect(submission.defaultPrevented).toBe(true);
     expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenLastCalledWith({
-      body: { categoryIds: [], priorityTypes: [], completedStatus: null, searchText: 'Отчёт' },
+      body: { categoryIds: [], priorityTypes: [], completedStatus: 0, searchText: 'Отчёт' },
     });
     expect(component.isLoading()).toBe(true);
     expect(root.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(true);
@@ -386,7 +406,7 @@ describe('Reminders', () => {
 
     expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenCalledTimes(2);
     expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenLastCalledWith({
-      body: { categoryIds: [], priorityTypes: [], completedStatus: null, searchText: 'Покупки' },
+      body: { categoryIds: [], priorityTypes: [], completedStatus: 0, searchText: 'Покупки' },
     });
     searchResponse.next([workReminders[1]]);
     searchResponse.complete();
@@ -399,7 +419,7 @@ describe('Reminders', () => {
     root.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
 
     expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenLastCalledWith({
-      body: { categoryIds: [], priorityTypes: [], completedStatus: null, searchText: null },
+      body: { categoryIds: [], priorityTypes: [], completedStatus: 0, searchText: null },
     });
     clearedResponse.next(workReminders);
     clearedResponse.complete();
@@ -418,8 +438,8 @@ describe('Reminders', () => {
     expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenLastCalledWith({
       body: { categoryIds: ['work'], priorityTypes: [3], completedStatus: 0, searchText: 'Отчёт' },
     });
-    expect(component.activeFiltersCount()).toBe(3);
-    expect(root.querySelector('.filter-count')?.textContent).toBe('3');
+    expect(component.activeFiltersCount()).toBe(2);
+    expect(root.querySelector('.filter-count')?.textContent).toBe('2');
     filteredResponse.next([workReminders[0]]);
     filteredResponse.complete();
   });
@@ -506,7 +526,6 @@ describe('Reminders', () => {
 
   it.each([
     { categoryIds: [], priorityTypes: [3], completedStatus: null },
-    { categoryIds: [], priorityTypes: [], completedStatus: 0 },
     { categoryIds: ['study'], priorityTypes: [], completedStatus: 1 },
   ])('hides empty categories for reminder criteria %j', (filters) => {
     const root = finishLoading([]);

@@ -33,7 +33,7 @@ export class ReminderFilters {
     priorityTypes: new FormControl<number[]>([], {
       nonNullable: true,
     }),
-    completedStatus: new FormControl<number | null>(null),
+    completedStatus: new FormControl<number | null>(0),
   });
 
   readonly selectedCategories = toSignal(this.form.controls.categoryIds.valueChanges, {
@@ -75,7 +75,7 @@ export class ReminderFilters {
     this.form.reset({
       categoryIds: [],
       priorityTypes: [],
-      completedStatus: null,
+      completedStatus: 0,
     });
   }
 

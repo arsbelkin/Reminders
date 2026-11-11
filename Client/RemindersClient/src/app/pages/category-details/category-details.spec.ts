@@ -93,12 +93,27 @@ describe('CategoryDetails', () => {
     expect(root().querySelectorAll('.members-list li')).toHaveLength(2);
     expect(root().querySelector('.details-meta')?.textContent).toContain(data.creatorEmail);
     expect(root().querySelector('time')?.getAttribute('datetime')).toBe(data.createdTime);
-    expect(reminders.apiV1RemindersSearchPost$Json).toHaveBeenCalledExactlyOnceWith({body: {categoryIds: ['work']}});
+    expect(reminders.apiV1RemindersSearchPost$Json).toHaveBeenCalledExactlyOnceWith({body: {categoryIds: ['work'], completedStatus: 0}});
     expect(root().querySelector('.category-reminders [role="status"]')).not.toBeNull();
     resolveReminders();
     expect(root().querySelectorAll('app-reminder-card')).toHaveLength(2);
     expect(root().querySelector('.category-reminders-heading .members-count')?.textContent).toBe('2');
     expect(root().querySelector('.card-title a')?.getAttribute('href')).toBe('/reminders/task-1');
+  });
+
+  it('toggles completed reminders within the current category', () => {
+    resolveCategory();
+    resolveReminders();
+    const toggle = root().querySelector<HTMLButtonElement>('.completed-toggle')!;
+    toggle.click();
+    harness.detectChanges();
+    TestBed.tick();
+    expect(reminders.apiV1RemindersSearchPost$Json).toHaveBeenLastCalledWith({body: {categoryIds: ['work'], completedStatus: null}});
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+    toggle.click();
+    harness.detectChanges();
+    TestBed.tick();
+    expect(reminders.apiV1RemindersSearchPost$Json).toHaveBeenLastCalledWith({body: {categoryIds: ['work'], completedStatus: 0}});
   });
 
   it('handles empty categories and optional metadata', () => {
@@ -108,7 +123,7 @@ describe('CategoryDetails', () => {
     expect(root().textContent).toContain('Описание не добавлено.');
     expect(root().textContent).toContain('Участники не указаны.');
     expect(root().querySelector('.details-meta')?.textContent).toContain('Не указан');
-    expect(root().querySelector('.category-reminders-state')?.textContent).toContain('Пока нет напоминаний');
+    expect(root().querySelector('.category-reminders-state')?.textContent).toContain('Нет незавершённых напоминаний');
     expect(root().querySelector('.category-reminders-heading .members-count')?.textContent).toBe('0');
     expect(component.formatDate('invalid date')).toBe('Не указана');
   });
@@ -163,7 +178,7 @@ describe('CategoryDetails', () => {
     resolveCategory('home', {id: 'home', title: 'Личное'});
     resolveReminders('home', []);
     expect(root().querySelector('h1')?.textContent).toBe('Личное');
-    expect(reminders.apiV1RemindersSearchPost$Json).toHaveBeenCalledExactlyOnceWith({body: {categoryIds: ['home']}});
+    expect(reminders.apiV1RemindersSearchPost$Json).toHaveBeenCalledExactlyOnceWith({body: {categoryIds: ['home'], completedStatus: 0}});
   });
 
   it('cancels stale reminders and clears old content while the next category is loading', async () => {

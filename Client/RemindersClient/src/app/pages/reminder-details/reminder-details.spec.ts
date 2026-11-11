@@ -15,8 +15,10 @@ import { ReminderDetails } from './reminder-details';
 @Component({template: '<p>Список</p>'}) class ListStub {}
 
 describe('ReminderDetails', () => {
-  const api = {apiV1RemindersReminderIdGet$Json: vi.fn(), apiV1RemindersGet$Json: vi.fn(), apiV1RemindersReminderIdDelete: vi.fn()};
+  const api = {apiV1RemindersReminderIdGet$Json: vi.fn(), apiV1RemindersGet$Json: vi.fn(), apiV1RemindersReminderIdDelete: vi.fn(), apiV1RemindersReminderIdCompletePost: vi.fn(), apiV1RemindersReminderIdReopenPost: vi.fn()};
   let deletion: Subject<void>;
+  let completion: Subject<void>;
+  let reopening: Subject<void>;
   let currentUserId = signal<string | null>('owner');
   let sessionToken = signal<string | null>('token');
   let requests: Map<string, Subject<ReminderInfoViewDto>>;
@@ -56,6 +58,10 @@ describe('ReminderDetails', () => {
     currentUserId = signal('owner');
     sessionToken = signal('token');
     deletion = new Subject<void>();
+    completion = new Subject<void>();
+    reopening = new Subject<void>();
+    api.apiV1RemindersReminderIdReopenPost.mockReset().mockReturnValue(reopening.asObservable());
+    api.apiV1RemindersReminderIdCompletePost.mockReset().mockReturnValue(completion.asObservable());
     api.apiV1RemindersReminderIdDelete.mockReset().mockReturnValue(deletion.asObservable());
     requests = new Map();
     api.apiV1RemindersReminderIdGet$Json.mockReset().mockImplementation(({reminderId}: {reminderId: string}) => {
@@ -80,6 +86,121 @@ describe('ReminderDetails', () => {
     });
     harness = await RouterTestingHarness.create();
     component = await harness.navigateByUrl('/reminders/first', ReminderDetails);
+  });
+
+  it('reopens once and refreshes the same detail page', () => {
+    resolve('first', data);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    root().querySelector<HTMLButtonElement>('.reopen-button')!.click();
+    harness.detectChanges();
+    expect(root().querySelector<HTMLButtonElement>('.reopen-button')!.disabled).toBe(true);
+    expect(root().querySelector<HTMLButtonElement>('.delete-button')!.disabled).toBe(true);
+    expect(root().querySelector('.reopen-button')?.textContent).toContain('Возобновляем');
+    component.reopenReminder();
+    component.completeReminder();
+    expect(api.apiV1RemindersReminderIdReopenPost).toHaveBeenCalledExactlyOnceWith({reminderId: 'first'});
+    expect(api.apiV1RemindersReminderIdCompletePost).not.toHaveBeenCalled();
+    reopening.next(); reopening.complete();
+    expect(navigate).not.toHaveBeenCalled();
+    expect(TestBed.inject(Router).url).toBe('/reminders/first');
+    expect(api.apiV1RemindersReminderIdGet$Json).toHaveBeenCalledTimes(2);
+    resolve('first', {...data, isCompleted: 0, completedTime: null});
+    expect(root().querySelector('h1')?.textContent).toBe(data.title);
+    expect(root().querySelector('.completion-status')?.textContent).toContain('Не выполнено');
+    expect(root().querySelector('.reopen-button')).toBeNull();
+    expect(root().querySelector('.complete-button')?.textContent).toContain('Завершить');
+    expect(root().textContent).not.toContain('Дата выполнения');
+  });
+
+  it.each([0, 403, 404, 500])('keeps completed details and permits retry on reopen error %s', (status) => {
+    resolve('first', data);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    component.reopenReminder();
+    reopening.error({status});
+    harness.detectChanges();
+    expect(root().querySelector('.completion-error')?.textContent).toContain('Не удалось возобновить');
+    expect(root().querySelector('.completion-status')?.textContent).toContain('Выполнено');
+    expect(root().querySelector<HTMLButtonElement>('.reopen-button')!.disabled).toBe(false);
+    expect(navigate).not.toHaveBeenCalled();
+    api.apiV1RemindersReminderIdReopenPost.mockReturnValue(of(undefined));
+    component.reopenReminder();
+    expect(navigate).not.toHaveBeenCalled();
+    resolve('first', {...data, isCompleted: 0, completedTime: null});
+    expect(component.canComplete()).toBe(true);
+  });
+
+  it('does not reopen an active reminder or allow another owner', () => {
+    resolve('first', {...data, isCompleted: 0});
+    expect(root().querySelector('.reopen-button')).toBeNull();
+    component.reopenReminder();
+    currentUserId.set('other');
+    harness.detectChanges();
+    expect(root().querySelector('.reopen-button')).toBeNull();
+    component.reopenReminder();
+    expect(api.apiV1RemindersReminderIdReopenPost).not.toHaveBeenCalled();
+  });
+
+  it('does not redirect another detail page after a late reopen response', async () => {
+    resolve('first', data);
+    component.reopenReminder();
+    await harness.navigateByUrl('/reminders/second', ReminderDetails);
+    resolve('second', {...data, id: 'second'});
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    reopening.next(); reopening.complete();
+    expect(navigate).not.toHaveBeenCalled();
+    expect(api.apiV1RemindersReminderIdGet$Json).toHaveBeenCalledTimes(2);
+    expect(root().querySelector('h1')?.textContent).toBe(data.title);
+  });
+
+  it('completes once, disables conflicting actions and refreshes the same detail page', () => {
+    resolve('first', {...data, isCompleted: 0});
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    root().querySelector<HTMLButtonElement>('.complete-button')!.click();
+    harness.detectChanges();
+    expect(root().querySelector<HTMLButtonElement>('.complete-button')!.disabled).toBe(true);
+    expect(root().querySelector<HTMLButtonElement>('.delete-button')!.disabled).toBe(true);
+    component.completeReminder();
+    expect(api.apiV1RemindersReminderIdCompletePost).toHaveBeenCalledExactlyOnceWith({reminderId: 'first'});
+    completion.next(); completion.complete();
+    expect(navigate).not.toHaveBeenCalled();
+    expect(TestBed.inject(Router).url).toBe('/reminders/first');
+    expect(api.apiV1RemindersReminderIdGet$Json).toHaveBeenCalledTimes(2);
+    resolve('first', data);
+    expect(root().querySelector('h1')?.textContent).toBe(data.title);
+    expect(root().querySelector('.completion-status')?.textContent).toContain('Выполнено');
+    expect(root().querySelector('.reopen-button')?.textContent).toContain('Возобновить');
+    expect(root().textContent).toContain('Дата выполнения');
+  });
+
+  it('keeps details on completion failure and permits retry', () => {
+    resolve('first', {...data, isCompleted: 0});
+    component.completeReminder();
+    completion.error({status: 500});
+    harness.detectChanges();
+    expect(root().querySelector('.completion-error')?.textContent).toContain('Не удалось завершить');
+    expect(root().querySelector('h1')?.textContent).toBe(data.title);
+    expect(root().querySelector<HTMLButtonElement>('.complete-button')!.disabled).toBe(false);
+  });
+
+  it('does not offer completion for completed reminders or another owner', () => {
+    resolve('first', data);
+    expect(component.canComplete()).toBe(false);
+    expect(root().querySelector('.reopen-button')).not.toBeNull();
+    component.completeReminder();
+    currentUserId.set('other');
+    resolve('first', {...data, isCompleted: 0});
+    component.completeReminder();
+    expect(api.apiV1RemindersReminderIdCompletePost).not.toHaveBeenCalled();
+  });
+
+  it('does not redirect another reminder after a late completion response', async () => {
+    resolve('first', {...data, isCompleted: 0});
+    component.completeReminder();
+    await harness.navigateByUrl('/reminders/second', ReminderDetails);
+    resolve('second', {...data, id: 'second', isCompleted: 0});
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    completion.next(); completion.complete();
+    expect(navigate).not.toHaveBeenCalled();
   });
 
   it('loads details from the route and renders all user-facing fields', () => {
