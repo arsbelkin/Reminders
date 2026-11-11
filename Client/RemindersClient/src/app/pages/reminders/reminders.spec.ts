@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
 import { CategoriesService, RemindersService } from '../../api/services';
@@ -45,6 +46,7 @@ describe('Reminders', () => {
     await TestBed.configureTestingModule({
       imports: [Reminders],
       providers: [
+        provideRouter([]),
         { provide: RemindersService, useValue: remindersApi },
         { provide: CategoriesService, useValue: categoriesApi },
       ],

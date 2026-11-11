@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
 import { ReminderTable } from './reminder-table';
 
@@ -25,7 +26,7 @@ describe('ReminderTable sorting', () => {
   }
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [ReminderTable] }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [ReminderTable], providers: [provideRouter([])] }).compileComponents();
     fixture = TestBed.createComponent(ReminderTable);
     fixture.componentRef.setInput('reminders', reminders);
     await fixture.whenStable();

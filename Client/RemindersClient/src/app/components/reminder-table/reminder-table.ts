@@ -1,4 +1,5 @@
 import { Component, computed, input, model } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
 import { PRIORITY_LABELS } from '../../shared/reminder-labels';
 
@@ -11,6 +12,7 @@ export interface ReminderTableSort {
 
 @Component({
   selector: 'app-reminder-table',
+  imports: [RouterLink],
   templateUrl: './reminder-table.html',
   styleUrl: './reminder-table.css',
 })

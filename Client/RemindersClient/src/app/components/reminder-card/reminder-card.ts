@@ -1,9 +1,10 @@
 import { Component, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
 import { PRIORITY_LABELS } from '../../shared/reminder-labels';
 
 @Component({
-  imports: [],
+  imports: [RouterLink],
   selector: 'app-reminder-card',
   styleUrl: './reminder-card.css',
   templateUrl: './reminder-card.html',

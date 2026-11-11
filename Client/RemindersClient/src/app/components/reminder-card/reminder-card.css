@@ -7,6 +7,7 @@
 }
 
 .reminder-card {
+  position: relative;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -46,6 +47,13 @@
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
+
+.card-title a { color: inherit; text-decoration: none; }
+.card-title a::after { position: absolute; inset: 0; border-radius: 16px; content: ''; }
+.card-title a:focus-visible { outline: none; }
+.card-title a:focus-visible::after { outline: 3px solid #93b4ff; outline-offset: 3px; }
+.reminder-card:has(a):hover { border-color: #b8cef7; box-shadow: 0 4px 16px #2563eb0a; }
+.reminder-card:has(a):hover .card-title { color: #2563eb; }
 
 .reminder-card--completed .card-title {
   color: #64748b;

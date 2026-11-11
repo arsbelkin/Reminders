@@ -1,0 +1,122 @@
+<section class="details-page" aria-label="Детали напоминания">
+  <div class="details-toolbar">
+    <a class="back-link" routerLink="/reminders">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+        stroke-linejoin="round" aria-hidden="true"><path d="m10 5-7 7 7 7M3 12h18" /></svg>
+      Мои напоминания
+    </a>
+    <button class="navigation-button" type="button" (click)="openNavigation()" aria-haspopup="dialog">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+        aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16M13 9h4M13 13h4" /></svg>
+      Список напоминаний
+    </button>
+  </div>
+
+  @let current = state();
+  @if (current.kind === 'loading') {
+    <div class="details-state" role="status">
+      <span class="loading-spinner" aria-hidden="true"></span>
+      <p>Загружаем напоминание…</p>
+    </div>
+  } @else if (current.kind === 'error') {
+    <div class="details-state" role="alert">
+      <span class="state-symbol" aria-hidden="true">!</span>
+      <h1>{{ current.title }}</h1>
+      <p>{{ current.message }}</p>
+      @if (current.retry) {
+        <button class="retry-button" type="button" (click)="retry()">Попробовать снова</button>
+      }
+      <a class="back-link" routerLink="/reminders">Вернуться к напоминаниям</a>
+    </div>
+  } @else {
+    @let reminder = current.reminder;
+    <div class="details-layout">
+      <article class="details-card" [attr.data-priority]="reminder.priority ?? 0">
+        <div class="details-heading">
+          <span class="category-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+              stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+            </svg>
+            {{ reminder.categoryName || 'Без категории' }}
+          </span>
+          <h1>{{ reminder.title || 'Без названия' }}</h1>
+          <div class="details-badges">
+            <span class="priority-badge">{{ priorityLabels[reminder.priority ?? 0] ?? 'Неизвестен' }}</span>
+            <span class="completion-status" [class.completion-status--completed]="reminder.isCompleted === 1">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="10" cy="10" r="7.25" />
+                @if (reminder.isCompleted === 1) { <path d="m6.75 10 2.1 2.1 4.4-4.4" /> }
+                @else { <path d="M10 6v4l2.5 1.5" /> }
+              </svg>
+              {{ reminder.isCompleted === 1 ? 'Выполнено' : 'Не выполнено' }}
+            </span>
+          </div>
+        </div>
+        <section class="details-section" aria-labelledby="reminder-description-title">
+          <h2 id="reminder-description-title">Описание</h2>
+          <p class="description-text" [class.empty-text]="!reminder.description?.trim()">{{ reminder.description?.trim() || 'Описание не добавлено.' }}</p>
+        </section>
+        <section class="details-section" aria-labelledby="reminder-members-title">
+          <h2 id="reminder-members-title">Участники <span class="members-count">{{ reminder.memberEmails?.length ?? 0 }}</span></h2>
+          <ul class="members-list">
+            @for (email of reminder.memberEmails ?? []; track $index) {
+              <li><span class="member-icon" aria-hidden="true">{{ email.charAt(0).toUpperCase() }}</span><span>{{ email }}</span></li>
+            } @empty { <li class="empty-text">Участники не указаны.</li> }
+          </ul>
+        </section>
+      </article>
+      <aside class="details-meta" aria-label="Даты напоминания">
+        <h2>Сведения</h2>
+        <dl>
+          <div><dt>Дата создания</dt><dd><time [attr.datetime]="reminder.createdTime">{{ formatDate(reminder.createdTime) }}</time></dd></div>
+          <div><dt>Напомнить</dt><dd>
+            @if (reminder.dueDate) { <time [attr.datetime]="reminder.dueDate">{{ formatDate(reminder.dueDate) }}</time> }
+            @else { <span class="empty-text">Без даты</span> }
+          </dd></div>
+          @if (reminder.isCompleted === 1) {
+            <div><dt>Дата выполнения</dt><dd><time [attr.datetime]="reminder.completedTime">{{ formatDate(reminder.completedTime) }}</time></dd></div>
+          }
+        </dl>
+      </aside>
+    </div>
+  }
+</section>
+
+<dialog #navigationDialog class="navigation-dialog" aria-labelledby="navigation-title">
+  <div class="navigation-heading">
+    <div><h2 id="navigation-title">Напоминания</h2><p>Переключайтесь между задачами</p></div>
+    <button class="navigation-close" type="button" aria-label="Закрыть список напоминаний" (click)="closeNavigation()" autofocus>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+        aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+    </button>
+  </div>
+  <label class="navigation-search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+      aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4.5 4.5" /></svg>
+    <input type="search" [formControl]="navigationSearch" placeholder="Поиск напоминания…" aria-label="Поиск в списке напоминаний" />
+  </label>
+  <div class="navigation-content">
+    @if (navigationLoading()) { <p class="navigation-state" role="status">Загружаем напоминания…</p> }
+    @else if (navigationError(); as message) {
+      <div class="navigation-state" role="alert"><p>{{ message }}</p>
+        <button class="retry-button" type="button" (click)="loadNavigation()">Попробовать снова</button>
+      </div>
+    } @else {
+      <nav aria-label="Переключение напоминаний">
+        @for (item of filteredReminders(); track item.id) {
+          <a class="navigation-item" [routerLink]="['/reminders', item.id]" (click)="closeNavigation()"
+            [attr.aria-current]="item.id === reminderId() ? 'page' : null">
+            <span class="navigation-status" [class.navigation-status--completed]="item.isCompleted === 1" aria-hidden="true"></span>
+            <span class="navigation-copy"><span class="navigation-item-title">{{ item.title || 'Без названия' }}</span>
+              <span class="navigation-category">{{ item.categoryName || 'Без категории' }}</span></span>
+            <span class="visually-hidden">{{ item.isCompleted === 1 ? 'Выполнено' : 'Не выполнено' }}</span>
+          </a>
+        } @empty {
+          <p class="navigation-state">{{ navigationSearch.value.trim() ? 'Ничего не найдено. Измените запрос.' : 'Напоминаний пока нет.' }}</p>
+        }
+      </nav>
+    }
+  </div>
+</dialog>

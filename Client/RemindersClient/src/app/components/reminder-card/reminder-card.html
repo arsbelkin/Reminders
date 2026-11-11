@@ -9,7 +9,13 @@
     <span>{{ reminder().categoryName || 'Без категории' }}</span>
   </div>
 
-  <h3 class="card-title">{{ reminder().title || 'Без названия' }}</h3>
+  <h3 class="card-title">
+    @if (reminder().id; as id) {
+      <a [routerLink]="['/reminders', id]">{{ reminder().title || 'Без названия' }}</a>
+    } @else {
+      {{ reminder().title || 'Без названия' }}
+    }
+  </h3>
 
   <div class="card-footer">
     <span class="priority-badge">

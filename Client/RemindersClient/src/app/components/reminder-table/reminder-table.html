@@ -32,7 +32,11 @@
       @for (reminder of sortedReminders(); track reminder.id) {
         <tr [attr.data-priority]="reminder.priority ?? 0">
           <th scope="row" class="reminder-title" [class.reminder-title--completed]="reminder.isCompleted === 1">
-            {{ reminder.title || 'Без названия' }}
+            @if (reminder.id) {
+              <a [routerLink]="['/reminders', reminder.id]">{{ reminder.title || 'Без названия' }}</a>
+            } @else {
+              {{ reminder.title || 'Без названия' }}
+            }
           </th>
           <td class="reminder-category">{{ reminder.categoryName || 'Без категории' }}</td>
           <td>
