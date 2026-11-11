@@ -1,6 +1,7 @@
 import { Component, ElementRef, effect, inject, signal, viewChild } from '@angular/core';
 import { TokenStorageService } from '../../auth/token-storage.service';
 import { UserAvatarService } from '../../auth/user-avatar.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-account-menu',
@@ -20,8 +21,19 @@ export class AccountMenu {
   readonly avatarUrl = signal<string | null>(null);
   readonly menuOpen = signal(false);
 
+  private readonly router = inject(Router);
+
+  logout(): void {
+    this.closeMenu();
+    this.tokenStorage.clearToken();
+
+    void this.router.navigate(['/login'], {
+      replaceUrl: true,
+    });
+  }
+
   constructor() {
-    effect(onCleanup => {
+    effect((onCleanup) => {
       const token = this.tokenStorage.token();
       this.menuOpen.set(false);
       this.avatarUrl.set(null);
@@ -29,7 +41,7 @@ export class AccountMenu {
 
       let objectUrl: string | null = null;
       const request = this.avatars.getAvatar().subscribe({
-        next: blob => {
+        next: (blob) => {
           objectUrl = URL.createObjectURL(blob);
           this.avatarUrl.set(objectUrl);
         },
@@ -43,7 +55,7 @@ export class AccountMenu {
   }
 
   toggleMenu(): void {
-    this.menuOpen.update(open => !open);
+    this.menuOpen.update((open) => !open);
   }
 
   closeMenu(restoreFocus = false): void {
