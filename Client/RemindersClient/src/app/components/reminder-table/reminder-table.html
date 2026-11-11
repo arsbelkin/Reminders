@@ -1,6 +1,6 @@
 <div class="table-scroll" role="region" aria-label="Таблица напоминаний" tabindex="0">
   <table class="reminders-table">
-    <caption class="visually-hidden">Мои напоминания</caption>
+    <caption class="visually-hidden">Мои напоминания. Нажмите на заголовок столбца для сортировки.</caption>
     <colgroup>
       <col class="title-column" />
       <col class="category-column" />
@@ -9,14 +9,27 @@
     </colgroup>
     <thead>
       <tr>
-        <th scope="col">Название</th>
-        <th scope="col">Категория</th>
-        <th scope="col">Приоритет</th>
-        <th scope="col">Статус</th>
+        @for (column of columns; track column.key) {
+          <th scope="col" [attr.aria-sort]="sorting()?.column === column.key ? sorting()?.direction : null">
+            <button class="sort-button" type="button" [title]="sortHint(column.key)" (click)="sortBy(column.key)">
+              <span>{{ column.label }}</span>
+              <svg class="sort-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor"
+                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                @if (sorting()?.column !== column.key) {
+                  <path d="M7 15V5m-3 3 3-3 3 3m3-3v10m-3-3 3 3 3-3" />
+                } @else if (sorting()?.direction === 'ascending') {
+                  <path d="M10 15V5m-4 4 4-4 4 4" />
+                } @else {
+                  <path d="M10 5v10m-4-4 4 4 4-4" />
+                }
+              </svg>
+            </button>
+          </th>
+        }
       </tr>
     </thead>
     <tbody>
-      @for (reminder of reminders(); track reminder.id) {
+      @for (reminder of sortedReminders(); track reminder.id) {
         <tr [attr.data-priority]="reminder.priority ?? 0">
           <th scope="row" class="reminder-title" [class.reminder-title--completed]="reminder.isCompleted === 1">
             {{ reminder.title || 'Без названия' }}

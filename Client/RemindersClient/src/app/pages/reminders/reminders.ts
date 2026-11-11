@@ -1,10 +1,16 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { finalize } from 'rxjs';
-import { RemindersService } from '../../api/services';
 import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
 import { ReminderCard } from '../../components/reminder-card/reminder-card';
-import { ReminderTable } from '../../components/reminder-table/reminder-table';
+import { ReminderTable, ReminderTableSort } from '../../components/reminder-table/reminder-table';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+
+import { CategoriesService, RemindersService } from '../../api/services';
+import { CategoryListViewDto } from '../../api/models/category-list-view-dto';
+import {
+  ReminderFilters,
+  ReminderFiltersValue,
+} from '../../components/reminder-filters/reminder-filters';
 
 interface ReminderCategoryGroup {
   key: string;
@@ -13,9 +19,9 @@ interface ReminderCategoryGroup {
 }
 
 @Component({
-  imports: [ReminderCard, ReminderTable, ReactiveFormsModule],
+  imports: [ReminderCard, ReminderTable, ReactiveFormsModule, ReminderFilters],
   selector: 'app-reminders',
-  styleUrl: './reminders.css',
+  styleUrls: ['./reminders.css', './reminders-search.css'],
   templateUrl: './reminders.html',
 })
 export class Reminders implements OnInit {
@@ -32,8 +38,26 @@ export class Reminders implements OnInit {
   readonly isLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly viewMode = signal<'cards' | 'table'>('cards');
+  readonly tableSort = signal<ReminderTableSort | null>(null);
 
   private readonly collapsedCategoryKeys = signal<ReadonlySet<string>>(new Set());
+
+  private readonly categoriesApi = inject(CategoriesService);
+
+  readonly categories = signal<CategoryListViewDto[]>([]);
+  readonly categoriesLoading = signal(false);
+  readonly categoriesError = signal<string | null>(null);
+
+  readonly appliedFilters = signal<ReminderFiltersValue>({
+    categoryIds: [],
+    priorityTypes: [],
+    completedStatus: null,
+  });
+
+  readonly activeFiltersCount = computed(() => {
+    const filters = this.appliedFilters();
+    return filters.categoryIds.length + filters.priorityTypes.length + (filters.completedStatus !== null ? 1 : 0);
+  });
 
   readonly categoryGroups = computed(() => {
     const groups = new Map<string, ReminderCategoryGroup>();
@@ -62,6 +86,7 @@ export class Reminders implements OnInit {
 
   ngOnInit(): void {
     this.loadReminders();
+    this.loadCategories();
   }
 
   isCategoryCollapsed(key: string): boolean {
@@ -93,6 +118,7 @@ export class Reminders implements OnInit {
     this.remindersApi
       .apiV1RemindersSearchPost$Json({
         body: {
+          ...this.appliedFilters(),
           searchText: this.searchControl.value.trim() || null,
         },
       })
@@ -109,5 +135,35 @@ export class Reminders implements OnInit {
           );
         },
       });
+  }
+
+  loadCategories(): void {
+    if (this.categoriesLoading()) {
+      return;
+    }
+
+    this.categoriesLoading.set(true);
+    this.categoriesError.set(null);
+
+    this.categoriesApi
+      .apiV1CategoriesGet$Json()
+      .pipe(finalize(() => this.categoriesLoading.set(false)))
+      .subscribe({
+        next: (categories) => {
+          this.categories.set(categories);
+        },
+        error: () => {
+          this.categoriesError.set('Не удалось загрузить категории.');
+        },
+      });
+  }
+
+  applyFilters(values: ReminderFiltersValue): void {
+    if (this.isLoading()) {
+      return;
+    }
+
+    this.appliedFilters.set(values);
+    this.loadReminders();
   }
 }

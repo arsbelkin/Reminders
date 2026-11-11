@@ -54,18 +54,62 @@
     </div>
   </div>
 
-  <form role="search" [formGroup]="searchForm" (ngSubmit)="loadReminders()">
-    <label for="reminder-search">Поиск по названию</label>
-
-    <input
-      id="reminder-search"
-      type="search"
-      placeholder="Найти напоминание"
-      formControlName="searchText"
-    />
-
-    <button type="submit" [disabled]="isLoading()">Найти</button>
+  <form class="search-toolbar" role="search" [formGroup]="searchForm" (ngSubmit)="loadReminders()">
+    <label class="search-label" for="reminder-search">Поиск по названию</label>
+    <div class="search-field">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+        stroke-linecap="round" aria-hidden="true">
+        <circle cx="10.5" cy="10.5" r="6.5" />
+        <path d="m16 16 4.5 4.5" />
+      </svg>
+      <input id="reminder-search" type="search" placeholder="Поиск по названию напоминания…"
+        formControlName="searchText" />
+    </div>
+    <button class="search-submit" type="submit" [disabled]="isLoading()">Найти</button>
+    <button
+      class="filter-button"
+      type="button"
+      [attr.aria-label]="'Подробные фильтры' + (activeFiltersCount() ? ', выбрано: ' + activeFiltersCount() : '')"
+      title="Подробные фильтры"
+      [class.filter-button--active]="activeFiltersCount() > 0"
+      [disabled]="isLoading() || categoriesLoading() || categoriesError() !== null"
+      (click)="filtersWindow.open(appliedFilters())"
+    >
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.7"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M4 5h16l-6 7v6l-4 2v-8Z" />
+      </svg>
+      @if (activeFiltersCount()) {
+        <span class="filter-count" aria-hidden="true">{{ activeFiltersCount() }}</span>
+      }
+    </button>
   </form>
+
+  @if (categoriesLoading()) {
+    <p class="categories-loading" role="status">Загружаем категории…</p>
+  }
+
+  @if (categoriesError(); as message) {
+    <div class="categories-error" role="alert">
+      <p>{{ message }}</p>
+      <button type="button" (click)="loadCategories()">Повторить загрузку категорий</button>
+    </div>
+  }
+
+  <app-reminder-filters
+    #filtersWindow
+    [categories]="categories()"
+    (filtersApplied)="applyFilters($event)"
+  />
 
   @if (isLoading()) {
     <div class="page-state" role="status">
@@ -124,7 +168,7 @@
       <p class="state-description">Добавленные напоминания появятся здесь.</p>
     </div>
   } @else if (viewMode() === 'table') {
-    <app-reminder-table [reminders]="reminders()" />
+    <app-reminder-table [reminders]="reminders()" [(sorting)]="tableSort" />
   } @else {
     <div class="category-list">
       @for (category of categoryGroups(); track category.key; let index = $index) {

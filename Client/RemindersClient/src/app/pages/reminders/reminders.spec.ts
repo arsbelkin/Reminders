@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
-import { RemindersService } from '../../api/services';
+import { CategoriesService, RemindersService } from '../../api/services';
 import { Reminders } from './reminders';
 
 describe('Reminders', () => {
@@ -9,6 +9,7 @@ describe('Reminders', () => {
   let fixture: ComponentFixture<Reminders>;
   let response: Subject<ReminderListViewDto[]>;
   const remindersApi = { apiV1RemindersSearchPost$Json: vi.fn() };
+  const categoriesApi = { apiV1CategoriesGet$Json: () => of([]) };
   const workReminders: ReminderListViewDto[] = [
     { id: 'work-1', title: 'Отчёт', categoryId: 'work', categoryName: 'Работа', priority: 3, isCompleted: 0 },
     { id: 'home-1', title: 'Покупки', categoryId: 'home', categoryName: 'Дом', priority: 1, isCompleted: 1 },
@@ -38,7 +39,10 @@ describe('Reminders', () => {
 
     await TestBed.configureTestingModule({
       imports: [Reminders],
-      providers: [{ provide: RemindersService, useValue: remindersApi }],
+      providers: [
+        { provide: RemindersService, useValue: remindersApi },
+        { provide: CategoriesService, useValue: categoriesApi },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Reminders);
@@ -163,7 +167,7 @@ describe('Reminders', () => {
     expect(tableButton.getAttribute('aria-pressed')).toBe('true');
     expect(root.querySelector('.category-group')).toBeNull();
     expect(root.querySelector('app-reminder-card')).toBeNull();
-    expect([...root.querySelectorAll('thead th')].map((cell) => cell.textContent))
+    expect([...root.querySelectorAll('thead th')].map((cell) => cell.textContent?.trim()))
       .toEqual(['Название', 'Категория', 'Приоритет', 'Статус']);
 
     const rows = root.querySelectorAll<HTMLTableRowElement>('tbody tr');
@@ -193,6 +197,33 @@ describe('Reminders', () => {
     expect(panelFor(homeButton).hidden).toBe(false);
     expect(root.querySelector('table')).toBeNull();
     expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps table sorting across view switches and new search results without changing cards', () => {
+    const root = finishLoading(workReminders);
+    selectView(root, 'Таблица');
+    root.querySelector<HTMLButtonElement>('thead button')!.click();
+    fixture.detectChanges();
+    expect([...root.querySelectorAll('tbody th')].map((cell) => cell.textContent?.trim()))
+      .toEqual(['Встреча', 'Отчёт', 'Покупки']);
+    expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenCalledTimes(1);
+
+    selectView(root, 'Карточки');
+    expect([...root.querySelector('.category-group')!.querySelectorAll('.card-title')]
+      .map((title) => title.textContent)).toEqual(['Отчёт', 'Встреча']);
+    selectView(root, 'Таблица');
+    expect(root.querySelector('thead th')?.getAttribute('aria-sort')).toBe('ascending');
+
+    const refreshed = new Subject<ReminderListViewDto[]>();
+    remindersApi.apiV1RemindersSearchPost$Json.mockReturnValue(refreshed.asObservable());
+    component.loadReminders();
+    fixture.detectChanges();
+    refreshed.next([{ id: 'z', title: 'Яблоко' }, { id: 'a', title: 'Абрикос' }]);
+    refreshed.complete();
+    fixture.detectChanges();
+    expect([...root.querySelectorAll('tbody th')].map((cell) => cell.textContent?.trim()))
+      .toEqual(['Абрикос', 'Яблоко']);
+    expect(root.querySelector('thead th')?.getAttribute('aria-sort')).toBe('ascending');
   });
 
   it('uses the same fallback labels and completion states in the table', () => {
@@ -226,7 +257,7 @@ describe('Reminders', () => {
 
     expect(submission.defaultPrevented).toBe(true);
     expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenLastCalledWith({
-      body: { searchText: 'Отчёт' },
+      body: { categoryIds: [], priorityTypes: [], completedStatus: null, searchText: 'Отчёт' },
     });
     expect(component.isLoading()).toBe(true);
     expect(root.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(true);
@@ -251,7 +282,7 @@ describe('Reminders', () => {
 
     expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenCalledTimes(2);
     expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenLastCalledWith({
-      body: { searchText: 'Покупки' },
+      body: { categoryIds: [], priorityTypes: [], completedStatus: null, searchText: 'Покупки' },
     });
     searchResponse.next([workReminders[1]]);
     searchResponse.complete();
@@ -264,12 +295,29 @@ describe('Reminders', () => {
     root.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
 
     expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenLastCalledWith({
-      body: { searchText: null },
+      body: { categoryIds: [], priorityTypes: [], completedStatus: null, searchText: null },
     });
     clearedResponse.next(workReminders);
     clearedResponse.complete();
     fixture.detectChanges();
     expect(root.querySelectorAll('app-reminder-card')).toHaveLength(3);
+  });
+
+  it('counts active selections and combines them with the search, preserving status zero', () => {
+    const root = finishLoading(workReminders);
+    component.searchControl.setValue('Отчёт');
+    const filteredResponse = new Subject<ReminderListViewDto[]>();
+    remindersApi.apiV1RemindersSearchPost$Json.mockReturnValue(filteredResponse.asObservable());
+    component.applyFilters({ categoryIds: ['work'], priorityTypes: [3], completedStatus: 0 });
+    fixture.detectChanges();
+
+    expect(remindersApi.apiV1RemindersSearchPost$Json).toHaveBeenLastCalledWith({
+      body: { categoryIds: ['work'], priorityTypes: [3], completedStatus: 0, searchText: 'Отчёт' },
+    });
+    expect(component.activeFiltersCount()).toBe(3);
+    expect(root.querySelector('.filter-count')?.textContent).toBe('3');
+    filteredResponse.next([workReminders[0]]);
+    filteredResponse.complete();
   });
 
   it.each(['Карточки', 'Таблица'] as const)('shows the empty state in %s mode', (mode) => {

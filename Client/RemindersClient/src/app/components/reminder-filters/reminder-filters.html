@@ -1,0 +1,87 @@
+<dialog #filtersDialog class="filters-dialog" aria-labelledby="filters-dialog-title">
+  <form class="filters-form" [formGroup]="form" (ngSubmit)="apply()">
+    <div class="filters-heading">
+      <span class="heading-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 5h16l-6 7v6l-4 2v-8Z" />
+        </svg>
+      </span>
+      <div class="heading-copy">
+        <h2 id="filters-dialog-title">Фильтры напоминаний</h2>
+        <p>Уточните, какие задачи показать</p>
+      </div>
+      <button class="close-button" type="button" aria-label="Закрыть фильтры" (click)="close()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" aria-hidden="true">
+          <path d="m6 6 12 12M18 6 6 18" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="filters-body">
+      <fieldset class="filter-field">
+        <legend>Категории</legend>
+        <p class="field-hint">Пустой выбор — все категории.</p>
+        <div class="category-options">
+          @for (category of categories(); track category.id ?? $index) {
+            @if (category.id) {
+              <label class="filter-option" [class.filter-option--selected]="selectedCategories().includes(category.id)">
+                <input #categoryCheckbox type="checkbox"
+                  [checked]="selectedCategories().includes(category.id)"
+                  (change)="toggleCategory(category.id, categoryCheckbox.checked)" />
+                <span class="option-name">{{ category.title || 'Без названия' }}</span>
+              </label>
+            }
+          } @empty {
+            <p class="field-hint">У вас пока нет категорий.</p>
+          }
+        </div>
+      </fieldset>
+
+      <fieldset class="filter-field">
+        <legend>Приоритеты</legend>
+        <p class="field-hint">Можно выбрать несколько. Пустой выбор — все приоритеты.</p>
+        <div class="priority-options">
+          @for (option of priorityOptions; track option.value) {
+            <label class="filter-option" [class.filter-option--selected]="selectedPriorities().includes(option.value)">
+              <input #priorityCheckbox type="checkbox"
+                [checked]="selectedPriorities().includes(option.value)"
+                (change)="togglePriority(option.value, priorityCheckbox.checked)" />
+              <span class="option-name">{{ option.label }}</span>
+            </label>
+          }
+        </div>
+      </fieldset>
+
+      <div class="filter-field">
+        <label class="field-label" for="filter-status">Статус выполнения</label>
+        <div class="status-select">
+          <select id="filter-status" formControlName="completedStatus">
+            <option [ngValue]="null">Все напоминания</option>
+            <option [ngValue]="0">Невыполненные</option>
+            <option [ngValue]="1">Выполненные</option>
+          </select>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="filters-actions">
+      <button class="reset-button" type="button" (click)="reset()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 4v6h6M3.8 10a8 8 0 1 1 .7 7" />
+        </svg>
+        Сбросить
+      </button>
+      <div class="footer-actions">
+        <button type="button" (click)="close()">Отмена</button>
+        <button class="apply-button" type="submit">Применить</button>
+      </div>
+    </div>
+  </form>
+</dialog>

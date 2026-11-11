@@ -37,14 +37,20 @@ th, td {
 }
 
 thead th {
-  padding-top: 15px;
-  padding-bottom: 15px;
+  padding: 0;
   border-bottom: 1px solid #e2e8f0;
   color: #64748b;
   background: #f8fafc;
   font-size: 12px;
   font-weight: 600;
 }
+
+thead th[aria-sort] { color: #2563eb; background: #eff6ff; }
+.sort-button { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 48px; padding: 15px 22px; border: 0; color: inherit; background: transparent; font: inherit; line-height: 1.5; text-align: left; cursor: pointer; }
+.sort-button:hover { color: #2563eb; background: #eff6ff; }
+.sort-button:focus-visible { outline: 3px solid #93b4ff; outline-offset: -3px; }
+.sort-icon { flex-shrink: 0; width: 16px; height: 16px; color: #94a3b8; }
+th[aria-sort] .sort-icon { color: #2563eb; }
 
 tbody tr + tr {
   border-top: 1px solid #f1f5f9;
@@ -70,4 +76,6 @@ tbody tr + tr {
 
 @media (max-width: 600px) {
   th, td { padding: 16px; }
+  thead th { padding: 0; }
+  .sort-button { padding: 15px 16px; }
 }
