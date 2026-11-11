@@ -32,13 +32,39 @@
       </button>
     </div>
   } @else {
-    <ul class="reminders-grid" aria-label="Напоминания">
-      @for (reminder of reminders(); track reminder.id) {
-        <li>
-          <app-reminder-card [reminder]="reminder" />
-        </li>
+    <div class="category-list">
+      @for (category of categoryGroups(); track category.key; let index = $index) {
+        <div class="category-group" [class.category-group--collapsed]="isCategoryCollapsed(category.key)">
+          <h2 class="category-heading">
+            <button class="category-toggle" type="button"
+              [id]="'category-toggle-' + index"
+              [attr.aria-expanded]="!isCategoryCollapsed(category.key)"
+              [attr.aria-controls]="'category-reminders-' + index"
+              (click)="toggleCategory(category.key)">
+              <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+              </svg>
+              <span class="category-name">{{ category.name }}</span>
+              <span class="category-count">{{ category.reminders.length }}</span>
+              <svg class="category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
+          </h2>
+          <ul class="reminders-grid" [id]="'category-reminders-' + index"
+            [attr.aria-labelledby]="'category-toggle-' + index"
+            [hidden]="isCategoryCollapsed(category.key)">
+            @for (reminder of category.reminders; track reminder.id) {
+              <li>
+                <app-reminder-card [reminder]="reminder" />
+              </li>
+            }
+          </ul>
+        </div>
       } @empty {
-        <li class="page-state empty-state">
+        <div class="page-state">
           <span class="state-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
               stroke-linecap="round" stroke-linejoin="round">
@@ -48,8 +74,8 @@
           </span>
           <h2 class="state-title">Напоминаний пока нет</h2>
           <p class="state-description">Добавленные напоминания появятся здесь.</p>
-        </li>
+        </div>
       }
-    </ul>
+    </div>
   }
 </section>

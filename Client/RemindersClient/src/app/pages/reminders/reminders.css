@@ -41,6 +41,86 @@ h1 {
   line-height: 1.4;
 }
 
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+.category-heading {
+  margin: 0 0 18px;
+  font-size: clamp(21px, 2.5vw, 25px);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -.4px;
+}
+
+.category-group--collapsed .category-heading {
+  margin-bottom: 0;
+}
+
+.category-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 4px 0;
+  border: 0;
+  border-radius: 6px;
+  color: #1e293b;
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.category-toggle:hover .category-name {
+  color: #2563eb;
+}
+
+.category-toggle:focus-visible {
+  outline: 3px solid #93b4ff;
+  outline-offset: 5px;
+}
+
+.category-icon {
+  flex-shrink: 0;
+  width: 23px;
+  height: 23px;
+  color: #2563eb;
+}
+
+.category-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.category-count {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: #64748b;
+  background: #e8edf4;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: normal;
+}
+
+.category-chevron {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-left: auto;
+  color: #64748b;
+  transition: transform .18s ease;
+}
+
+.category-toggle[aria-expanded='false'] .category-chevron {
+  transform: rotate(-90deg);
+}
+
 .reminders-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr));
@@ -48,6 +128,10 @@ h1 {
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.reminders-grid[hidden] {
+  display: none;
 }
 
 .reminders-grid > li {
@@ -67,10 +151,6 @@ h1 {
   border-radius: 16px;
   background: #fff;
   text-align: center;
-}
-
-.empty-state {
-  grid-column: 1 / -1;
 }
 
 .state-icon {
@@ -159,11 +239,13 @@ h1 {
 
 @media (prefers-reduced-motion: reduce) {
   .loading-spinner { animation: none; }
+  .category-chevron { transition: none; }
 }
 
 @media (max-width: 600px) {
   .reminders-page { padding: 28px 20px 40px; }
   .page-heading { margin-bottom: 22px; }
+  .category-list { gap: 28px; }
   .reminders-grid { gap: 16px; }
   .page-state { min-height: 260px; }
 }
