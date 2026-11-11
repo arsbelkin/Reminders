@@ -3,13 +3,14 @@ import {
   DestroyRef,
   ElementRef,
   computed,
+  effect,
   inject,
   signal,
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   Subject,
   catchError,
@@ -25,6 +26,7 @@ import { RemindersService } from '../../api/services';
 import { ReminderInfoViewDto } from '../../api/models/reminder-info-view-dto';
 import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
 import { PRIORITY_LABELS } from '../../shared/reminder-labels';
+import { TokenStorageService } from '../../auth/token-storage.service';
 
 type DetailState =
   | { kind: 'loading' }
@@ -39,9 +41,13 @@ type DetailState =
     '../../shared/reminder-badges.css',
     '../../shared/details-page.css',
     '../../shared/details-navigation.css',
+    './reminder-delete.css',
   ],
 })
 export class ReminderDetails {
+  private readonly router = inject(Router);
+  private readonly tokenStorage = inject(TokenStorageService);
+  private readonly deleteDialog = viewChild.required<ElementRef<HTMLDialogElement>>('deleteDialog');
   private readonly api = inject(RemindersService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
@@ -99,6 +105,79 @@ export class ReminderDetails {
     ),
     { initialValue: { kind: 'loading' } as DetailState },
   );
+
+  readonly canDelete = computed(() => {
+    const current = this.state();
+    const userId = this.tokenStorage.userId();
+    return current.kind === 'ready' && !!userId &&
+      current.reminder.creatorId?.trim().toLowerCase() === userId;
+  });
+  readonly deleteTarget = signal<{id: string; title: string} | null>(null);
+  readonly isDeleting = signal(false);
+  readonly deleteError = signal<string | null>(null);
+
+  constructor() {
+    effect(() => {
+      const target = this.deleteTarget();
+      if (target && (target.id !== this.reminderId() || !this.canDelete())) {
+        this.deleteDialog().nativeElement.close();
+        this.deleteTarget.set(null);
+        this.deleteError.set(null);
+      }
+    });
+  }
+
+  openDelete(): void {
+    const current = this.state();
+    if (this.isDeleting() || !this.canDelete() || current.kind !== 'ready') return;
+    this.deleteTarget.set({id: this.reminderId(), title: current.reminder.title || 'Без названия'});
+    this.deleteError.set(null);
+    this.deleteDialog().nativeElement.showModal();
+  }
+
+  cancelDelete(): void {
+    if (this.isDeleting()) return;
+    this.deleteDialog().nativeElement.close();
+    this.deleteTarget.set(null);
+    this.deleteError.set(null);
+  }
+
+  onDeleteCancel(event: Event): void {
+    if (this.isDeleting()) {
+      event.preventDefault();
+    } else {
+      this.deleteTarget.set(null);
+      this.deleteError.set(null);
+    }
+  }
+
+  deleteReminder(): void {
+    const target = this.deleteTarget();
+    if (!target || this.isDeleting() || !this.canDelete() || target.id !== this.reminderId()) return;
+    const ownerId = this.tokenStorage.userId();
+    this.isDeleting.set(true);
+    this.deleteError.set(null);
+    this.api.apiV1RemindersReminderIdDelete({reminderId: target.id}).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.isDeleting.set(false)),
+    ).subscribe({
+      next: () => {
+        this.deleteDialog().nativeElement.close();
+        this.deleteTarget.set(null);
+        this.navigationReminders.update(items => items.filter(item => item.id !== target.id));
+        if (this.reminderId() === target.id && this.tokenStorage.userId() === ownerId) {
+          void this.router.navigate(['/reminders'], {replaceUrl: true});
+        }
+      },
+      error: (error: {status?: number}) => {
+        this.deleteError.set(error.status === 403
+          ? 'Недостаточно прав для удаления напоминания.'
+          : error.status === 404
+            ? 'Напоминание уже удалено или у вас нет прав на его удаление.'
+            : 'Не удалось удалить напоминание. Попробуйте ещё раз.');
+      },
+    });
+  }
 
   readonly navigationReminders = signal<ReminderListViewDto[]>([]);
   readonly navigationLoading = signal(false);

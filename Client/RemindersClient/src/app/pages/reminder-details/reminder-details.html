@@ -5,11 +5,22 @@
         stroke-linejoin="round" aria-hidden="true"><path d="m10 5-7 7 7 7M3 12h18" /></svg>
       Мои напоминания
     </a>
-    <button class="navigation-button" type="button" (click)="openNavigation()" aria-haspopup="dialog">
+    <div class="details-actions">
+    <button class="navigation-button" type="button" (click)="openNavigation()" aria-haspopup="dialog" [disabled]="isDeleting()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
         aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16M13 9h4M13 13h4" /></svg>
       Список напоминаний
     </button>
+    @if (canDelete()) {
+      <button class="delete-button" type="button" (click)="openDelete()" [disabled]="isDeleting()" aria-haspopup="dialog">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6" />
+        </svg>
+        Удалить
+      </button>
+    }
+    </div>
   </div>
 
   @let current = state();
@@ -122,5 +133,33 @@
         }
       </nav>
     }
+  </div>
+</dialog>
+
+<dialog #deleteDialog class="delete-dialog" aria-labelledby="delete-title" aria-describedby="delete-description"
+  [attr.aria-busy]="isDeleting()" (cancel)="onDeleteCancel($event)">
+  <div class="delete-heading">
+    <span class="delete-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6" />
+      </svg>
+    </span>
+    <h2 id="delete-title">Удалить напоминание?</h2>
+    <button class="delete-close" type="button" aria-label="Закрыть окно удаления" [disabled]="isDeleting()" (click)="cancelDelete()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+        stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+    </button>
+  </div>
+  <div class="delete-body">
+    <p class="delete-record-name">{{ deleteTarget()?.title || 'Без названия' }}</p>
+    <p id="delete-description" class="delete-hint">Это действие нельзя отменить.</p>
+    @if (deleteError()) { <p class="delete-error" role="alert">{{ deleteError() }}</p> }
+  </div>
+  <div class="delete-actions">
+    <button class="delete-cancel" type="button" autofocus [disabled]="isDeleting()" (click)="cancelDelete()">Отмена</button>
+    <button class="delete-confirm" type="button" [disabled]="isDeleting()" (click)="deleteReminder()">
+      @if (isDeleting()) { <span class="delete-spinner" aria-hidden="true"></span> }
+      {{ isDeleting() ? 'Удаляем…' : 'Удалить' }}
+    </button>
   </div>
 </dialog>

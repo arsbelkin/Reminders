@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Subject, of } from 'rxjs';
 import { RemindersService } from '../../api/services';
@@ -15,12 +15,16 @@ import { ReminderDetails } from './reminder-details';
 @Component({template: '<p>Список</p>'}) class ListStub {}
 
 describe('ReminderDetails', () => {
-  const api = {apiV1RemindersReminderIdGet$Json: vi.fn(), apiV1RemindersGet$Json: vi.fn()};
+  const api = {apiV1RemindersReminderIdGet$Json: vi.fn(), apiV1RemindersGet$Json: vi.fn(), apiV1RemindersReminderIdDelete: vi.fn()};
+  let deletion: Subject<void>;
+  let currentUserId = signal<string | null>('owner');
+  let sessionToken = signal<string | null>('token');
   let requests: Map<string, Subject<ReminderInfoViewDto>>;
   let harness: RouterTestingHarness;
   let component: ReminderDetails;
   let allowed: boolean;
   const data: ReminderInfoViewDto = {
+    creatorId: 'owner',
     id: 'first', title: 'Подготовить отчёт', categoryId: 'work', categoryName: 'Работа', description: 'Первая строка.\nВторая строка.',
     priority: 3, isCompleted: 1, createdTime: '2026-11-01T09:00:00Z',
     dueDate: '2026-11-15T10:30:00Z', completedTime: '2026-11-12T12:00:00Z',
@@ -40,8 +44,19 @@ describe('ReminderDetails', () => {
     return dialog;
   }
 
+  function mockDeleteDialog(): HTMLDialogElement {
+    const dialog = root().querySelector<HTMLDialogElement>('.delete-dialog')!;
+    dialog.showModal = vi.fn(() => dialog.setAttribute('open', ''));
+    dialog.close = vi.fn(() => dialog.removeAttribute('open'));
+    return dialog;
+  }
+
   beforeEach(async () => {
     allowed = true;
+    currentUserId = signal('owner');
+    sessionToken = signal('token');
+    deletion = new Subject<void>();
+    api.apiV1RemindersReminderIdDelete.mockReset().mockReturnValue(deletion.asObservable());
     requests = new Map();
     api.apiV1RemindersReminderIdGet$Json.mockReset().mockImplementation(({reminderId}: {reminderId: string}) => {
       const response = new Subject<ReminderInfoViewDto>();
@@ -55,7 +70,7 @@ describe('ReminderDetails', () => {
     TestBed.configureTestingModule({
       providers: [
         {provide: RemindersService, useValue: api},
-        {provide: TokenStorageService, useValue: {getToken: () => allowed ? 'token' : null}},
+        {provide: TokenStorageService, useValue: {getToken: () => allowed ? sessionToken() : null, token: sessionToken, userId: currentUserId}},
         provideRouter([
           {path: 'reminders/:id', component: ReminderDetails, canActivate: [authGuard]},
           {path: 'reminders', component: ListStub},
@@ -189,6 +204,132 @@ describe('ReminderDetails', () => {
     component.navigationSearch.setValue('нет совпадений');
     harness.detectChanges();
     expect(root().querySelector('.navigation-state')?.textContent).toContain('Ничего не найдено');
+  });
+
+  it('shows deletion only to the creator and opens a named confirmation before requesting DELETE', () => {
+    resolve('first', data);
+    const dialog = mockDeleteDialog();
+    root().querySelector<HTMLButtonElement>('.delete-button')!.click();
+    harness.detectChanges();
+    expect(dialog.showModal).toHaveBeenCalledTimes(1);
+    expect(root().querySelector('.delete-record-name')?.textContent).toBe(data.title);
+    expect(api.apiV1RemindersReminderIdDelete).not.toHaveBeenCalled();
+    root().querySelector<HTMLButtonElement>('.delete-cancel')!.click();
+    harness.detectChanges();
+    expect(dialog.close).toHaveBeenCalledTimes(1);
+    expect(component.deleteTarget()).toBeNull();
+    expect(api.apiV1RemindersReminderIdDelete).not.toHaveBeenCalled();
+  });
+
+  it.each(['another-owner', null])('does not offer or allow deletion for identity %s', identity => {
+    currentUserId.set(identity);
+    resolve('first', data);
+    const dialog = mockDeleteDialog();
+    expect(root().querySelector('.delete-button')).toBeNull();
+    component.openDelete();
+    component.deleteReminder();
+    expect(dialog.showModal).not.toHaveBeenCalled();
+    expect(api.apiV1RemindersReminderIdDelete).not.toHaveBeenCalled();
+  });
+
+  it('does not offer deletion when creator information is missing', () => {
+    resolve('first', {id: 'first', title: 'Задача'});
+    expect(root().querySelector('.delete-button')).toBeNull();
+  });
+
+  it('blocks repeated DELETE calls and dismissal while the request is pending', () => {
+    resolve('first', data);
+    const dialog = mockDeleteDialog();
+    component.openDelete();
+    harness.detectChanges();
+    root().querySelector<HTMLButtonElement>('.delete-confirm')!.click();
+    component.deleteReminder();
+    component.cancelDelete();
+    harness.detectChanges();
+    const cancel = new Event('cancel', {cancelable: true});
+    dialog.dispatchEvent(cancel);
+    expect(cancel.defaultPrevented).toBe(true);
+    expect(dialog.close).not.toHaveBeenCalled();
+    expect(component.isDeleting()).toBe(true);
+    expect(api.apiV1RemindersReminderIdDelete).toHaveBeenCalledExactlyOnceWith({reminderId: 'first'});
+    expect(root().querySelector<HTMLButtonElement>('.delete-confirm')!.disabled).toBe(true);
+    expect(root().querySelector<HTMLButtonElement>('.delete-cancel')!.disabled).toBe(true);
+  });
+
+  it('allows Escape before deletion and makes no request', () => {
+    resolve('first', data);
+    const dialog = mockDeleteDialog();
+    component.openDelete();
+    harness.detectChanges();
+    const cancel = new Event('cancel', {cancelable: true});
+    dialog.dispatchEvent(cancel);
+    expect(cancel.defaultPrevented).toBe(false);
+    expect(component.deleteTarget()).toBeNull();
+    expect(api.apiV1RemindersReminderIdDelete).not.toHaveBeenCalled();
+  });
+
+  it('removes the cached item and replaces the details route with the list after success', async () => {
+    resolve('first', data);
+    mockDeleteDialog();
+    component.navigationReminders.set([{id: 'first'}, {id: 'second'}]);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate');
+    component.openDelete();
+    component.deleteReminder();
+    deletion.next();
+    deletion.complete();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+    expect(navigate).toHaveBeenCalledExactlyOnceWith(['/reminders'], {replaceUrl: true});
+    expect(root().textContent).toContain('Список');
+    expect(component.navigationReminders().map(item => item.id)).toEqual(['second']);
+    expect(component.isDeleting()).toBe(false);
+  });
+
+  it.each([0, 403, 404, 500])('keeps the current reminder on deletion error %s and supports retry', status => {
+    resolve('first', data);
+    const dialog = mockDeleteDialog();
+    component.openDelete();
+    component.deleteReminder();
+    deletion.error({status});
+    harness.detectChanges();
+    expect(component.isDeleting()).toBe(false);
+    expect(dialog.close).not.toHaveBeenCalled();
+    expect(root().querySelector('h1')?.textContent).toBe(data.title);
+    expect(root().querySelector('.delete-error')?.textContent).toBeTruthy();
+    expect(root().querySelector<HTMLButtonElement>('.delete-confirm')!.disabled).toBe(false);
+    const retry = new Subject<void>();
+    api.apiV1RemindersReminderIdDelete.mockReturnValue(retry.asObservable());
+    component.deleteReminder();
+    expect(api.apiV1RemindersReminderIdDelete).toHaveBeenCalledTimes(2);
+    expect(component.deleteError()).toBeNull();
+  });
+
+  it('closes an obsolete confirmation and never deletes the next route by mistake', async () => {
+    resolve('first', data);
+    const dialog = mockDeleteDialog();
+    component.openDelete();
+    harness.detectChanges();
+    await harness.navigateByUrl('/reminders/second', ReminderDetails);
+    expect(dialog.close).toHaveBeenCalled();
+    resolve('second', {...data, id: 'second', title: 'Другая задача'});
+    component.deleteReminder();
+    expect(component.deleteTarget()).toBeNull();
+    expect(api.apiV1RemindersReminderIdDelete).not.toHaveBeenCalled();
+  });
+
+  it('keeps an in-flight DELETE bound to its original ID without redirecting another detail page', async () => {
+    resolve('first', data);
+    mockDeleteDialog();
+    component.openDelete();
+    component.deleteReminder();
+    await harness.navigateByUrl('/reminders/second', ReminderDetails);
+    resolve('second', {...data, id: 'second', title: 'Другая задача'});
+    deletion.next();
+    deletion.complete();
+    harness.detectChanges();
+    expect(api.apiV1RemindersReminderIdDelete).toHaveBeenCalledExactlyOnceWith({reminderId: 'first'});
+    expect(TestBed.inject(Router).url).toBe('/reminders/second');
+    expect(root().querySelector('h1')?.textContent).toBe('Другая задача');
   });
 
   it('protects direct URLs with the auth guard in the real route configuration', async () => {
