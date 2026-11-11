@@ -1,0 +1,27 @@
+fieldset { display: grid; gap: 22px; min-width: 0; margin: 0; padding: 0; border: 0; }
+fieldset:disabled { opacity: .65; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.form-field { min-width: 0; }
+.fields-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 18px; }
+label { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; min-height: 18px; margin-bottom: 10px; color: #334155; font-size: 13px; font-weight: 600; }
+.required-mark { color: #2563eb; }
+.optional-label { margin-left: auto; color: #94a3b8; font-size: 11px; font-weight: 400; }
+input, textarea, select { box-sizing: border-box; display: block; width: 100%; min-width: 0; padding: 12px 14px; border: 1px solid #dbe3ef; border-radius: 10px; outline: 0; color: #334155; background: #fff; font: inherit; font-size: 14px; line-height: 1.5; }
+input, select { min-height: 46px; }
+input[type='datetime-local'] { padding-right: 10px; font-size: 13px; }
+textarea { min-height: 100px; resize: vertical; }
+input::placeholder, textarea::placeholder, select.placeholder { color: #94a3b8; }
+option { color: #334155; }
+input:focus, textarea:focus, select:focus { border-color: #7aa5fa; box-shadow: 0 0 0 3px #2563eb12; }
+[aria-invalid='true'] { border-color: #f87171; background: #fffafa; }
+[aria-invalid='true']:focus { box-shadow: 0 0 0 3px #ef444412; }
+.select-field { position: relative; }
+select { appearance: none; padding-right: 38px; cursor: pointer; text-overflow: ellipsis; }
+.select-field svg { position: absolute; top: 50%; right: 13px; width: 17px; height: 17px; color: #64748b; transform: translateY(-50%); pointer-events: none; }
+.field-hint, .field-error { margin: 8px 0 0; font-size: 12px; line-height: 1.5; }
+.field-hint { color: #64748b; }
+.field-error { color: #dc2626; }
+.form-error { display: flex; align-items: flex-start; gap: 9px; margin-top: 22px; padding: 12px 14px; border: 1px solid #fecaca; border-radius: 10px; color: #b91c1c; background: #fef2f2; font-size: 12px; line-height: 1.6; }
+.form-error svg { flex-shrink: 0; width: 18px; height: 18px; margin-top: 1px; }
+.form-error p { margin: 0; }
+@media (max-width: 580px) { .fields-row { grid-template-columns: minmax(0, 1fr); gap: 22px; } }

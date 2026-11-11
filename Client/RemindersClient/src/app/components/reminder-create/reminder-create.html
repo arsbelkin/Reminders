@@ -1,0 +1,114 @@
+<dialog #reminderDialog class="reminder-dialog" aria-labelledby="reminder-create-title"
+  aria-describedby="reminder-create-description" (cancel)="onCancel($event)">
+  <form class="reminder-form" [formGroup]="form" (ngSubmit)="save()" [attr.aria-busy]="isSaving()">
+    <div class="dialog-heading">
+      <span class="heading-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+          stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="3" width="15" height="18" rx="2" />
+          <path d="M9 3v18M3 7h4M3 12h4M3 17h4M12 9h5M12 13h5M12 17h3" />
+        </svg>
+      </span>
+      <div class="heading-copy">
+        <h2 id="reminder-create-title">Новое напоминание</h2>
+        <p id="reminder-create-description">Запишите важное, чтобы ничего не забыть</p>
+      </div>
+      <button class="close-button" type="button" aria-label="Закрыть создание напоминания"
+        [disabled]="isSaving()" (click)="close()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+      </button>
+    </div>
+
+    <div class="dialog-body">
+      <fieldset [disabled]="isSaving()">
+        <legend class="visually-hidden">Данные напоминания</legend>
+        <div class="form-field">
+          <label for="reminder-title">Название <span class="required-mark" aria-hidden="true">*</span></label>
+          <input id="reminder-title" type="text" formControlName="title" autofocus
+            placeholder="Что нужно сделать?" aria-required="true"
+            [attr.aria-invalid]="form.controls.title.touched && form.controls.title.invalid"
+            [attr.aria-describedby]="form.controls.title.touched && form.controls.title.invalid ? 'reminder-title-error' : null" />
+          @if (form.controls.title.touched && form.controls.title.invalid) {
+            <p id="reminder-title-error" class="field-error" role="alert">Введите название напоминания.</p>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="reminder-category">Категория <span class="required-mark" aria-hidden="true">*</span></label>
+          <div class="select-field">
+            <select id="reminder-category" formControlName="categoryId" aria-required="true"
+              [class.placeholder]="!form.controls.categoryId.value"
+              [attr.aria-invalid]="form.controls.categoryId.touched && form.controls.categoryId.invalid"
+              [attr.aria-describedby]="form.controls.categoryId.touched && form.controls.categoryId.invalid ? 'reminder-category-error' : null">
+              <option value="" disabled>Выберите категорию</option>
+              @for (category of categories(); track category.id) {
+                @if (category.id) {
+                  <option [value]="category.id">{{ category.title || 'Без названия' }}</option>
+                }
+              }
+            </select>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+          </div>
+          @if (categories().length === 0) {
+            <p class="field-hint">Сначала создайте категорию.</p>
+          }
+          @if (form.controls.categoryId.touched && form.controls.categoryId.invalid) {
+            <p id="reminder-category-error" class="field-error" role="alert">Выберите категорию.</p>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="reminder-description">Описание <span class="optional-label">Необязательно</span></label>
+          <textarea id="reminder-description" formControlName="description" rows="3"
+            placeholder="Добавьте детали или короткую заметку"></textarea>
+        </div>
+
+        <div class="fields-row">
+          <div class="form-field">
+            <label for="reminder-priority">Приоритет</label>
+            <div class="select-field">
+              <select id="reminder-priority" formControlName="priority">
+                @for (option of priorityOptions; track option.value) {
+                  <option [ngValue]="option.value">{{ option.label }}</option>
+                }
+              </select>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+            </div>
+          </div>
+          <div class="form-field">
+            <label for="reminder-due-date">Дата и время <span class="optional-label">Необязательно</span></label>
+            <input id="reminder-due-date" type="datetime-local" formControlName="dueDate"
+              [attr.aria-invalid]="form.controls.dueDate.touched && form.controls.dueDate.invalid"
+              [attr.aria-describedby]="form.controls.dueDate.touched && form.controls.dueDate.invalid ? 'reminder-date-error' : null" />
+            @if (form.controls.dueDate.touched && form.controls.dueDate.invalid) {
+              <p id="reminder-date-error" class="field-error" role="alert">Укажите корректные дату и время.</p>
+            }
+          </div>
+        </div>
+      </fieldset>
+      @if (errorMessage()) {
+        <div class="form-error" role="alert">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+            stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v6m0 4h.01" /></svg>
+          <p>{{ errorMessage() }}</p>
+        </div>
+      }
+    </div>
+
+    <div class="dialog-actions">
+      <button class="cancel-button" type="button" [disabled]="isSaving()" (click)="close()">Отмена</button>
+      <button class="save-button" type="submit" [disabled]="isSaving()">
+        @if (isSaving()) {
+          <span class="saving-spinner" aria-hidden="true"></span>
+        } @else {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+        }
+        {{ isSaving() ? 'Создаём…' : 'Создать напоминание' }}
+      </button>
+    </div>
+  </form>
+</dialog>

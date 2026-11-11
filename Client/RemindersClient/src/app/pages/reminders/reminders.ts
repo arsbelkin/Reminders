@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { finalize } from 'rxjs';
 import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
 import { ReminderCard } from '../../components/reminder-card/reminder-card';
@@ -14,6 +14,8 @@ import {
 
 import { CategoryCreate } from '../../components/category-create/category-create';
 
+import { ReminderCreate } from '../../components/reminder-create/reminder-create';
+
 interface ReminderCategoryGroup {
   key: string;
   name: string;
@@ -21,13 +23,49 @@ interface ReminderCategoryGroup {
 }
 
 @Component({
-  imports: [ReminderCard, ReminderTable, ReactiveFormsModule, ReminderFilters, CategoryCreate],
+  imports: [
+    ReminderCard,
+    ReminderTable,
+    ReactiveFormsModule,
+    ReminderFilters,
+    CategoryCreate,
+    ReminderCreate,
+  ],
   selector: 'app-reminders',
+  host: {
+    '(document:click)': 'onDocumentClick($event)',
+    '(document:keydown.escape)': 'closeCreateMenu(true)',
+  },
   styleUrls: ['./reminders.css', './reminders-search.css', './reminders-categories.css'],
   templateUrl: './reminders.html',
 })
 export class Reminders implements OnInit {
   private readonly remindersApi = inject(RemindersService);
+  private readonly createMenu = viewChild.required<ElementRef<HTMLElement>>('createMenu');
+  private readonly createButton = viewChild.required<ElementRef<HTMLButtonElement>>('createButton');
+  readonly createMenuOpen = signal(false);
+
+  toggleCreateMenu(): void {
+    this.createMenuOpen.update(open => !open);
+  }
+
+  closeCreateMenu(restoreFocus = false): void {
+    if (!this.createMenuOpen()) return;
+    this.createMenuOpen.set(false);
+    if (restoreFocus) this.createButton().nativeElement.focus();
+  }
+
+  onDocumentClick(event: MouseEvent): void {
+    if (this.createMenuOpen() && !this.createMenu().nativeElement.contains(event.target as Node)) {
+      this.closeCreateMenu();
+    }
+  }
+
+  onCreateMenuFocusOut(event: FocusEvent): void {
+    if (!this.createMenu().nativeElement.contains(event.relatedTarget as Node | null)) {
+      this.closeCreateMenu();
+    }
+  }
 
   readonly searchControl = new FormControl('', {
     nonNullable: true,
@@ -74,8 +112,10 @@ export class Reminders implements OnInit {
   readonly categoryGroups = computed(() => {
     const groups = new Map<string, ReminderCategoryGroup>();
     const filters = this.appliedFilters();
-    const showEmptyCategories = !this.appliedSearchText() &&
-      filters.priorityTypes.length === 0 && filters.completedStatus === null;
+    const showEmptyCategories =
+      !this.appliedSearchText() &&
+      filters.priorityTypes.length === 0 &&
+      filters.completedStatus === null;
 
     if (showEmptyCategories) {
       const selectedCategoryIds = new Set(filters.categoryIds);
@@ -183,13 +223,15 @@ export class Reminders implements OnInit {
 
     this.categoriesApi
       .apiV1CategoriesGet$Json()
-      .pipe(finalize(() => {
-        this.categoriesLoading.set(false);
-        if (this.categoriesReloadRequested) {
-          this.categoriesReloadRequested = false;
-          this.loadCategories();
-        }
-      }))
+      .pipe(
+        finalize(() => {
+          this.categoriesLoading.set(false);
+          if (this.categoriesReloadRequested) {
+            this.categoriesReloadRequested = false;
+            this.loadCategories();
+          }
+        }),
+      )
       .subscribe({
         next: (categories) => {
           this.categories.set(categories);

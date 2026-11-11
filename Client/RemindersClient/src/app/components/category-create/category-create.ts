@@ -1,17 +1,5 @@
-import {
-  Component,
-  ElementRef,
-  inject,
-  output,
-  signal,
-  viewChild,
-} from '@angular/core';
-import {
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { Component, ElementRef, inject, output, signal, viewChild } from '@angular/core';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { CategoriesService } from '../../api/services';
 
@@ -24,8 +12,7 @@ import { CategoriesService } from '../../api/services';
 export class CategoryCreate {
   private readonly categoriesApi = inject(CategoriesService);
 
-  private readonly dialog =
-    viewChild.required<ElementRef<HTMLDialogElement>>('categoryDialog');
+  private readonly dialog = viewChild.required<ElementRef<HTMLDialogElement>>('categoryDialog');
 
   readonly created = output<void>();
 
@@ -35,10 +22,7 @@ export class CategoryCreate {
   readonly form = new FormGroup({
     title: new FormControl('', {
       nonNullable: true,
-      validators: [
-        Validators.required,
-        Validators.pattern(/\S/),
-      ],
+      validators: [Validators.required, Validators.pattern(/\S/)],
     }),
     description: new FormControl('', {
       nonNullable: true,
@@ -100,9 +84,7 @@ export class CategoryCreate {
           this.created.emit();
         },
         error: () => {
-          this.errorMessage.set(
-            'Не удалось создать категорию. Попробуйте ещё раз.',
-          );
+          this.errorMessage.set('Не удалось создать категорию. Попробуйте ещё раз.');
         },
       });
   }

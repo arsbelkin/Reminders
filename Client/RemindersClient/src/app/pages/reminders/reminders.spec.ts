@@ -5,6 +5,7 @@ import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
 import { CategoriesService, RemindersService } from '../../api/services';
 import { Reminders } from './reminders';
 import { CategoryCreate } from '../../components/category-create/category-create';
+import { ReminderCreate } from '../../components/reminder-create/reminder-create';
 
 describe('Reminders', () => {
   let component: Reminders;
@@ -52,6 +53,76 @@ describe('Reminders', () => {
     fixture = TestBed.createComponent(Reminders);
     component = fixture.componentInstance;
     await fixture.whenStable();
+  });
+
+  it('toggles creation choices from the icon button', () => {
+    const root = finishLoading([]);
+    const trigger = root.querySelector<HTMLButtonElement>('.create-button')!;
+    expect(trigger.textContent?.trim()).toBe('');
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(root.querySelector('.create-options')).toBeNull();
+    trigger.click();
+    fixture.detectChanges();
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(root.querySelectorAll('.create-option')).toHaveLength(2);
+    trigger.click();
+    fixture.detectChanges();
+    expect(root.querySelector('.create-options')).toBeNull();
+  });
+
+  it('closes on outside click, Escape and focus leaving the choices', () => {
+    const root = finishLoading([]);
+    const trigger = root.querySelector<HTMLButtonElement>('.create-button')!;
+    const search = root.querySelector<HTMLInputElement>('#reminder-search')!;
+    trigger.click();
+    fixture.detectChanges();
+    search.focus();
+    search.click();
+    fixture.detectChanges();
+    expect(root.querySelector('.create-options')).toBeNull();
+    expect(document.activeElement).toBe(search);
+
+    trigger.click();
+    fixture.detectChanges();
+    root.querySelector<HTMLButtonElement>('.create-option')!.focus();
+    document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true}));
+    fixture.detectChanges();
+    expect(root.querySelector('.create-options')).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+
+    trigger.click();
+    fixture.detectChanges();
+    root.querySelector<HTMLButtonElement>('.create-option')!.focus();
+    search.focus();
+    fixture.detectChanges();
+    expect(root.querySelector('.create-options')).toBeNull();
+    expect(document.activeElement).toBe(search);
+  });
+
+  it.each([0, 1])('opens only the selected dialog and closes the choices (option=%s)', (option) => {
+    const root = finishLoading([]);
+    const reminder = fixture.debugElement.query(By.directive(ReminderCreate)).componentInstance as ReminderCreate;
+    const category = fixture.debugElement.query(By.directive(CategoryCreate)).componentInstance as CategoryCreate;
+    const openReminder = vi.spyOn(reminder, 'open').mockImplementation(() => {});
+    const openCategory = vi.spyOn(category, 'open').mockImplementation(() => {});
+    root.querySelector<HTMLButtonElement>('.create-button')!.click();
+    fixture.detectChanges();
+    root.querySelectorAll<HTMLButtonElement>('.create-option')[option].click();
+    fixture.detectChanges();
+    expect(openReminder).toHaveBeenCalledTimes(option === 1 ? 1 : 0);
+    expect(openCategory).toHaveBeenCalledTimes(option === 0 ? 1 : 0);
+    expect(root.querySelector('.create-options')).toBeNull();
+  });
+
+  it.each(['loading', 'error'])('keeps category creation available when categories are %s', (state) => {
+    const root = finishLoading([]);
+    component.categoriesLoading.set(state === 'loading');
+    component.categoriesError.set(state === 'error' ? 'Ошибка' : null);
+    root.querySelector<HTMLButtonElement>('.create-button')!.click();
+    fixture.detectChanges();
+    const [category, reminder] = root.querySelectorAll<HTMLButtonElement>('.create-option');
+    expect(reminder.disabled).toBe(true);
+    expect(category.disabled).toBe(false);
   });
 
   it.each(['Карточки', 'Таблица'] as const)('shows loading before displaying %s', (mode) => {
@@ -417,7 +488,7 @@ describe('Reminders', () => {
     fixture.detectChanges();
 
     expect(root.querySelector('.category-group')).toBeNull();
-    expect(root.querySelector('.state-title')?.textContent).toBe('Ничего не найдено');
+    expect(root.querySelector('.state-title')?.textContent?.trim()).toBe('Ничего не найдено');
   });
 
   it('uses the submitted search rather than an unsubmitted draft to show empty categories', () => {
@@ -431,7 +502,7 @@ describe('Reminders', () => {
     component.loadReminders();
     fixture.detectChanges();
     expect(root.querySelector('.category-group')).toBeNull();
-    expect(root.querySelector('.state-title')?.textContent).toBe('Ничего не найдено');
+    expect(root.querySelector('.state-title')?.textContent?.trim()).toBe('Ничего не найдено');
 
     component.searchControl.setValue('');
     fixture.detectChanges();
@@ -449,7 +520,7 @@ describe('Reminders', () => {
 
     expect(root.querySelector('.category-group')).toBeNull();
     expect(root.querySelector('table')).toBeNull();
-    expect(root.querySelector('.state-title')?.textContent).toBe('Напоминаний пока нет');
+    expect(root.querySelector('.state-title')?.textContent?.trim()).toBe('Напоминаний пока нет');
   });
 
   it.each(['Карточки', 'Таблица'] as const)('shows the empty state in %s mode', (mode) => {
@@ -457,7 +528,7 @@ describe('Reminders', () => {
     selectView(root, mode);
     expect(root.querySelector('.category-group')).toBeNull();
     expect(root.querySelector('table')).toBeNull();
-    expect(root.querySelector('.state-title')?.textContent).toBe('Напоминаний пока нет');
+    expect(root.querySelector('.state-title')?.textContent?.trim()).toBe('Напоминаний пока нет');
   });
 
   it.each(['Карточки', 'Таблица'] as const)('shows the request error in %s mode', (mode) => {

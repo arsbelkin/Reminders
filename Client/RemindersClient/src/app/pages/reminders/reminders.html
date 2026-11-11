@@ -51,13 +51,45 @@
           </svg>
         </button>
       </div>
-      <button class="create-category-button" type="button" (click)="categoryCreateWindow.open()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-          stroke-linecap="round" aria-hidden="true">
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-        Новая категория
-      </button>
+      <div #createMenu class="create-menu" (focusout)="onCreateMenuFocusOut($event)">
+        <button #createButton class="create-button" type="button" aria-label="Создать"
+          title="Создать" [attr.aria-expanded]="createMenuOpen()"
+          [attr.aria-controls]="createMenuOpen() ? 'create-options' : null"
+          (click)="toggleCreateMenu()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+        </button>
+        @if (createMenuOpen()) {
+          <div id="create-options" class="create-options" role="group" aria-label="Что создать">
+            <p class="create-menu-heading">Создать</p>
+            <button class="create-option" type="button"
+              (click)="closeCreateMenu(true); categoryCreateWindow.open()">
+              <span class="create-option-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+                  <path d="M9 13h6M12 10v6" />
+                </svg>
+              </span>
+              <span class="create-option-copy"><span class="create-option-title">Категория</span>
+                <span class="create-option-description">Объединить напоминания</span></span>
+            </button>
+            <button class="create-option" type="button"
+              [disabled]="categoriesLoading() || categoriesError() !== null"
+              (click)="closeCreateMenu(true); reminderCreateWindow.open()">
+              <span class="create-option-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="5" y="3" width="15" height="18" rx="2" />
+                  <path d="M9 3v18M3 7h4M3 12h4M3 17h4M12 9h5M12 13h5" />
+                </svg>
+              </span>
+              <span class="create-option-copy"><span class="create-option-title">Напоминание</span>
+                <span class="create-option-description">Записать новую задачу</span></span>
+            </button>
+          </div>
+        }
+      </div>
     </div>
   </div>
 
@@ -168,7 +200,9 @@
         Попробовать снова
       </button>
     </div>
-  } @else if (reminders().length === 0 && (viewMode() === 'table' || categoryGroups().length === 0)) {
+  } @else if (
+    reminders().length === 0 && (viewMode() === 'table' || categoryGroups().length === 0)
+  ) {
     <div class="page-state">
       <span class="state-icon" aria-hidden="true">
         <svg
@@ -183,9 +217,15 @@
           <path d="M9 3v18M3 7h4M3 12h4M3 17h4M12 8h5M12 12h5M12 16h3" />
         </svg>
       </span>
-      <h2 class="state-title">{{ hasActiveQuery() ? 'Ничего не найдено' : 'Напоминаний пока нет' }}</h2>
+      <h2 class="state-title">
+        {{ hasActiveQuery() ? 'Ничего не найдено' : 'Напоминаний пока нет' }}
+      </h2>
       <p class="state-description">
-        {{ hasActiveQuery() ? 'Попробуйте изменить запрос или фильтры.' : 'Добавленные напоминания появятся здесь.' }}
+        {{
+          hasActiveQuery()
+            ? 'Попробуйте изменить запрос или фильтры.'
+            : 'Добавленные напоминания появятся здесь.'
+        }}
       </p>
     </div>
   } @else if (viewMode() === 'table') {
@@ -249,15 +289,25 @@
             } @empty {
               <li class="category-empty">
                 <span class="category-empty-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"
+                    />
                     <path d="M9 13h6M12 10v6" />
                   </svg>
                 </span>
                 <div>
                   <p class="category-empty-title">Пока нет напоминаний</p>
-                  <p class="category-empty-description">Здесь появятся напоминания из этой категории.</p>
+                  <p class="category-empty-description">
+                    Здесь появятся напоминания из этой категории.
+                  </p>
                 </div>
               </li>
             }
@@ -268,7 +318,10 @@
   }
 </section>
 
-<app-category-create
-  #categoryCreateWindow
-  (created)="loadCategories()"
+<app-category-create #categoryCreateWindow (created)="loadCategories()" />
+
+<app-reminder-create
+  #reminderCreateWindow
+  [categories]="categories()"
+  (created)="loadReminders()"
 />
