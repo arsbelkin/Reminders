@@ -1,13 +1,33 @@
-import { Component, DestroyRef, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Subject, catchError, combineLatest, distinctUntilChanged, finalize, map, of, shareReplay, startWith, switchMap } from 'rxjs';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import {
+  Subject,
+  catchError,
+  combineLatest,
+  distinctUntilChanged,
+  finalize,
+  map,
+  of,
+  shareReplay,
+  startWith,
+  switchMap,
+} from 'rxjs';
 import { CategoriesService, RemindersService } from '../../api/services';
 import { CategoryInfoViewDto } from '../../api/models/category-info-view-dto';
 import { CategoryListViewDto } from '../../api/models/category-list-view-dto';
 import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
 import { ReminderCard } from '../../components/reminder-card/reminder-card';
+import { CategoryActions } from '../../components/category-actions/category-actions';
 
 type CategoryState =
   | { kind: 'loading' }
@@ -20,72 +40,137 @@ type CategoryRemindersState =
 
 @Component({
   selector: 'app-category-details',
-  imports: [RouterLink, ReminderCard, ReactiveFormsModule],
+  imports: [RouterLink, ReminderCard, ReactiveFormsModule, CategoryActions],
   templateUrl: './category-details.html',
-  styleUrls: ['../../shared/details-page.css', '../../shared/details-navigation.css', './category-details.css'],
+  styleUrls: [
+    '../../shared/details-page.css',
+    '../../shared/details-navigation.css',
+    './category-details.css',
+  ],
 })
 export class CategoryDetails {
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly navigationDialog = viewChild.required<ElementRef<HTMLDialogElement>>('categoryNavigationDialog');
+  private readonly navigationDialog = viewChild.required<ElementRef<HTMLDialogElement>>(
+    'categoryNavigationDialog',
+  );
   private readonly categoriesApi = inject(CategoriesService);
   private readonly remindersApi = inject(RemindersService);
   private readonly route = inject(ActivatedRoute);
   private readonly reloadCategory = new Subject<void>();
   private readonly reloadReminders = new Subject<void>();
   private readonly routeId = this.route.paramMap.pipe(
-    map(params => params.get('id') ?? ''), distinctUntilChanged(),
+    map((params) => params.get('id') ?? ''),
+    distinctUntilChanged(),
   );
   private readonly dateFormatter = new Intl.DateTimeFormat('ru-RU', {
-    day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 
   private readonly categoryState = combineLatest([
-    this.routeId, this.reloadCategory.pipe(startWith(undefined)),
+    this.routeId,
+    this.reloadCategory.pipe(startWith(undefined)),
   ]).pipe(
-    switchMap(([id]) => this.categoriesApi.apiV1CategoriesCategoryIdGet$Json({ categoryId: id }).pipe(
-      map(category => ({ kind: 'ready', id, category }) as CategoryState),
-      catchError((error: {status?: number}) => of<CategoryState>(
-        error.status === 400 || error.status === 404
-          ? {kind: 'error', title: 'Категория не найдена', message: 'Возможно, она удалена или у вас нет доступа к ней.', retry: false}
-          : error.status === 403
-            ? {kind: 'error', title: 'Нет доступа к категории', message: 'Вернитесь к списку и выберите другую категорию.', retry: false}
-            : {kind: 'error', title: 'Не удалось загрузить категорию', message: 'Проверьте соединение и попробуйте ещё раз.', retry: true},
-      )),
-      startWith<CategoryState>({kind: 'loading'}),
-    )),
-    shareReplay({bufferSize: 1, refCount: true}),
-  );
-
-  readonly categoryId = toSignal(this.routeId, {initialValue: this.route.snapshot.paramMap.get('id') ?? ''});
-  readonly state = toSignal(this.categoryState, {initialValue: {kind: 'loading'} as CategoryState});
-  readonly showCompleted = signal(false);
-  private readonly completedChanges = toObservable(this.showCompleted);
-  readonly remindersState = toSignal(combineLatest([
-    this.categoryState, this.reloadReminders.pipe(startWith(undefined)), this.completedChanges,
-  ]).pipe(
-    switchMap(([state, , showCompleted]) => state.kind !== 'ready'
-      ? of<CategoryRemindersState>({kind: 'idle'})
-      : this.remindersApi.apiV1RemindersSearchPost$Json({body: {categoryIds: [state.id], completedStatus: showCompleted ? null : 0}}).pipe(
-        map(reminders => ({kind: 'ready', reminders}) as CategoryRemindersState),
-        catchError(() => of<CategoryRemindersState>({kind: 'error'})),
-        startWith<CategoryRemindersState>({kind: 'loading'}),
+    switchMap(([id]) =>
+      this.categoriesApi.apiV1CategoriesCategoryIdGet$Json({ categoryId: id }).pipe(
+        map((category) => ({ kind: 'ready', id, category }) as CategoryState),
+        catchError((error: { status?: number }) =>
+          of<CategoryState>(
+            error.status === 400 || error.status === 404
+              ? {
+                  kind: 'error',
+                  title: 'Категория не найдена',
+                  message: 'Возможно, она удалена или у вас нет доступа к ней.',
+                  retry: false,
+                }
+              : error.status === 403
+                ? {
+                    kind: 'error',
+                    title: 'Нет доступа к категории',
+                    message: 'Вернитесь к списку и выберите другую категорию.',
+                    retry: false,
+                  }
+                : {
+                    kind: 'error',
+                    title: 'Не удалось загрузить категорию',
+                    message: 'Проверьте соединение и попробуйте ещё раз.',
+                    retry: true,
+                  },
+          ),
+        ),
+        startWith<CategoryState>({ kind: 'loading' }),
       ),
     ),
-  ), {initialValue: {kind: 'idle'} as CategoryRemindersState});
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
 
-  retryCategory(): void { this.reloadCategory.next(); }
-  retryReminders(): void { this.reloadReminders.next(); }
+  readonly categoryId = toSignal(this.routeId, {
+    initialValue: this.route.snapshot.paramMap.get('id') ?? '',
+  });
+  readonly state = toSignal(this.categoryState, {
+    initialValue: { kind: 'loading' } as CategoryState,
+  });
+  readonly currentCategory = computed(() => {
+    const current = this.state();
+    return current.kind === 'ready' ? current.category : null;
+  });
+
+  onCategorySaved(id: string): void {
+    this.navigationLoaded = false;
+    if (id === this.categoryId()) this.reloadCategory.next();
+  }
+
+  onCategoryDeleted(id: string): void {
+    this.navigationCategories.update((items) => items.filter((item) => item.id !== id));
+    if (id === this.categoryId()) void this.router.navigate(['/reminders'], { replaceUrl: true });
+  }
+  readonly showCompleted = signal(false);
+  private readonly completedChanges = toObservable(this.showCompleted);
+  readonly remindersState = toSignal(
+    combineLatest([
+      this.categoryState,
+      this.reloadReminders.pipe(startWith(undefined)),
+      this.completedChanges,
+    ]).pipe(
+      switchMap(([state, , showCompleted]) =>
+        state.kind !== 'ready'
+          ? of<CategoryRemindersState>({ kind: 'idle' })
+          : this.remindersApi
+              .apiV1RemindersSearchPost$Json({
+                body: { categoryIds: [state.id], completedStatus: showCompleted ? null : 0 },
+              })
+              .pipe(
+                map((reminders) => ({ kind: 'ready', reminders }) as CategoryRemindersState),
+                catchError(() => of<CategoryRemindersState>({ kind: 'error' })),
+                startWith<CategoryRemindersState>({ kind: 'loading' }),
+              ),
+      ),
+    ),
+    { initialValue: { kind: 'idle' } as CategoryRemindersState },
+  );
+
+  retryCategory(): void {
+    this.reloadCategory.next();
+  }
+  retryReminders(): void {
+    this.reloadReminders.next();
+  }
 
   readonly navigationCategories = signal<CategoryListViewDto[]>([]);
   readonly navigationLoading = signal(false);
   readonly navigationError = signal<string | null>(null);
   private navigationLoaded = false;
-  readonly navigationSearch = new FormControl('', {nonNullable: true});
-  private readonly searchText = toSignal(this.navigationSearch.valueChanges, {initialValue: ''});
+  readonly navigationSearch = new FormControl('', { nonNullable: true });
+  private readonly searchText = toSignal(this.navigationSearch.valueChanges, { initialValue: '' });
   readonly filteredCategories = computed(() => {
     const search = this.searchText().trim().toLocaleLowerCase('ru');
-    return this.navigationCategories().filter(category =>
-      category.id && (category.title || 'Без названия').toLocaleLowerCase('ru').includes(search),
+    return this.navigationCategories().filter(
+      (category) =>
+        category.id && (category.title || 'Без названия').toLocaleLowerCase('ru').includes(search),
     );
   });
 
@@ -95,22 +180,27 @@ export class CategoryDetails {
     if (!this.navigationLoaded) this.loadNavigation();
   }
 
-  closeNavigation(): void { this.navigationDialog().nativeElement.close(); }
+  closeNavigation(): void {
+    this.navigationDialog().nativeElement.close();
+  }
 
   loadNavigation(): void {
     if (this.navigationLoading()) return;
     this.navigationLoading.set(true);
     this.navigationError.set(null);
-    this.categoriesApi.apiV1CategoriesGet$Json().pipe(
-      takeUntilDestroyed(this.destroyRef),
-      finalize(() => this.navigationLoading.set(false)),
-    ).subscribe({
-      next: categories => {
-        this.navigationCategories.set(categories);
-        this.navigationLoaded = true;
-      },
-      error: () => this.navigationError.set('Не удалось загрузить список категорий.'),
-    });
+    this.categoriesApi
+      .apiV1CategoriesGet$Json()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.navigationLoading.set(false)),
+      )
+      .subscribe({
+        next: (categories) => {
+          this.navigationCategories.set(categories);
+          this.navigationLoaded = true;
+        },
+        error: () => this.navigationError.set('Не удалось загрузить список категорий.'),
+      });
   }
 
   formatDate(value: string | null | undefined): string {

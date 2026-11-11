@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Subject, of } from 'rxjs';
-import { RemindersService } from '../../api/services';
+import { CategoriesService, RemindersService } from '../../api/services';
 import { ReminderInfoViewDto } from '../../api/models/reminder-info-view-dto';
 import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
 import { authGuard } from '../../auth/auth.guard';
@@ -15,7 +15,7 @@ import { ReminderDetails } from './reminder-details';
 @Component({template: '<p>Список</p>'}) class ListStub {}
 
 describe('ReminderDetails', () => {
-  const api = {apiV1RemindersReminderIdGet$Json: vi.fn(), apiV1RemindersGet$Json: vi.fn(), apiV1RemindersReminderIdDelete: vi.fn(), apiV1RemindersReminderIdCompletePost: vi.fn(), apiV1RemindersReminderIdReopenPost: vi.fn()};
+  const api = {apiV1RemindersReminderIdGet$Json: vi.fn(), apiV1RemindersGet$Json: vi.fn(), apiV1RemindersReminderIdDelete: vi.fn(), apiV1RemindersReminderIdCompletePost: vi.fn(), apiV1RemindersReminderIdReopenPost: vi.fn(), apiV1RemindersReminderIdPatch: vi.fn()};
   let deletion: Subject<void>;
   let completion: Subject<void>;
   let reopening: Subject<void>;
@@ -76,6 +76,7 @@ describe('ReminderDetails', () => {
     TestBed.configureTestingModule({
       providers: [
         {provide: RemindersService, useValue: api},
+        {provide: CategoriesService, useValue: {apiV1CategoriesGet$Json: () => of([{id: 'work', title: 'Работа'}])}},
         {provide: TokenStorageService, useValue: {getToken: () => allowed ? sessionToken() : null, token: sessionToken, userId: currentUserId}},
         provideRouter([
           {path: 'reminders/:id', component: ReminderDetails, canActivate: [authGuard]},

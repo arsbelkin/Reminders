@@ -27,6 +27,7 @@ import { ReminderInfoViewDto } from '../../api/models/reminder-info-view-dto';
 import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
 import { PRIORITY_LABELS } from '../../shared/reminder-labels';
 import { TokenStorageService } from '../../auth/token-storage.service';
+import { ReminderEdit } from '../../components/reminder-edit/reminder-edit';
 
 type DetailState =
   | { kind: 'loading' }
@@ -35,7 +36,7 @@ type DetailState =
 
 @Component({
   selector: 'app-reminder-details',
-  imports: [RouterLink, ReactiveFormsModule],
+  imports: [RouterLink, ReactiveFormsModule, ReminderEdit],
   templateUrl: './reminder-details.html',
   styleUrls: [
     '../../shared/reminder-badges.css',
@@ -45,6 +46,7 @@ type DetailState =
   ],
 })
 export class ReminderDetails {
+  private readonly editWindow = viewChild.required<ReminderEdit>('reminderEditWindow');
   private readonly router = inject(Router);
   private readonly tokenStorage = inject(TokenStorageService);
   private readonly deleteDialog = viewChild.required<ElementRef<HTMLDialogElement>>('deleteDialog');
@@ -112,6 +114,15 @@ export class ReminderDetails {
     return current.kind === 'ready' && !!userId &&
       current.reminder.creatorId?.trim().toLowerCase() === userId;
   });
+  readonly editableReminder = computed(() => {
+    const current = this.state();
+    return current.kind === 'ready' ? current.reminder : null;
+  });
+
+  onReminderSaved(id: string): void {
+    this.navigationLoaded = false;
+    if (id === this.reminderId()) this.reload.next();
+  }
   readonly deleteTarget = signal<{id: string; title: string} | null>(null);
   readonly isDeleting = signal(false);
   readonly deleteError = signal<string | null>(null);
@@ -135,7 +146,7 @@ export class ReminderDetails {
   }
 
   private changeCompletion(reopen: boolean): void {
-    if (!(reopen ? this.canReopen() : this.canComplete()) || this.isCompleting() || this.isDeleting()) return;
+    if (!(reopen ? this.canReopen() : this.canComplete()) || this.isCompleting() || this.isDeleting() || this.editWindow().isSaving()) return;
     const id = this.reminderId();
     const ownerId = this.tokenStorage.userId();
     this.isCompleting.set(true);
@@ -182,7 +193,7 @@ export class ReminderDetails {
 
   openDelete(): void {
     const current = this.state();
-    if (this.isDeleting() || this.isCompleting() || !this.canDelete() || current.kind !== 'ready') return;
+    if (this.isDeleting() || this.isCompleting() || this.editWindow().isSaving() || !this.canDelete() || current.kind !== 'ready') return;
     this.deleteTarget.set({id: this.reminderId(), title: current.reminder.title || 'Без названия'});
     this.deleteError.set(null);
     this.deleteDialog().nativeElement.showModal();

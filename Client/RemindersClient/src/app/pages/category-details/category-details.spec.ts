@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Subject, of } from 'rxjs';
 import { CategoriesService, RemindersService } from '../../api/services';
@@ -15,7 +15,7 @@ import { CategoryDetails } from './category-details';
 @Component({template: '<p>Список</p>'}) class ListStub {}
 
 describe('CategoryDetails', () => {
-  const categories = {apiV1CategoriesCategoryIdGet$Json: vi.fn(), apiV1CategoriesGet$Json: vi.fn()};
+  const categories = {apiV1CategoriesCategoryIdGet$Json: vi.fn(), apiV1CategoriesGet$Json: vi.fn(), apiV1CategoriesCategoryIdPatch: vi.fn(), apiV1CategoriesCategoryIdDelete: vi.fn()};
   const reminders = {apiV1RemindersSearchPost$Json: vi.fn()};
   let categoryRequests: Map<string, Subject<CategoryInfoViewDto>>;
   let reminderRequests: Map<string, Subject<ReminderListViewDto[]>>;
@@ -23,7 +23,7 @@ describe('CategoryDetails', () => {
   let component: CategoryDetails;
   let allowed: boolean;
   const data: CategoryInfoViewDto = {
-    id: 'work', title: 'Работа', description: 'Задачи команды.\nОбщие планы.',
+    id: 'work', creatorId: 'owner', title: 'Работа', description: 'Задачи команды.\nОбщие планы.',
     createdTime: '2026-11-01T09:00:00Z', creatorEmail: 'anna@example.test',
     usersEmails: ['anna@example.test', 'ivan@example.test'],
   };
@@ -44,7 +44,7 @@ describe('CategoryDetails', () => {
   }
 
   function mockDialog(): HTMLDialogElement {
-    const dialog = root().querySelector('dialog')!;
+    const dialog = root().querySelector<HTMLDialogElement>('.navigation-dialog')!;
     dialog.showModal = vi.fn(() => dialog.setAttribute('open', ''));
     dialog.close = vi.fn(() => dialog.removeAttribute('open'));
     return dialog;
@@ -71,7 +71,7 @@ describe('CategoryDetails', () => {
       providers: [
         {provide: CategoriesService, useValue: categories},
         {provide: RemindersService, useValue: reminders},
-        {provide: TokenStorageService, useValue: {getToken: () => allowed ? 'token' : null}},
+        {provide: TokenStorageService, useValue: {getToken: () => allowed ? 'token' : null, userId: () => allowed ? 'owner' : null}},
         provideRouter([
           {path: 'categories/:id', component: CategoryDetails, canActivate: [authGuard]},
           {path: 'reminders', component: ListStub},
@@ -81,6 +81,44 @@ describe('CategoryDetails', () => {
     });
     harness = await RouterTestingHarness.create();
     component = await harness.navigateByUrl('/categories/work', CategoryDetails);
+  });
+
+  it('saves from the edit dialog and refreshes details and the navigation title', () => {
+    resolveCategory(); resolveReminders();
+    const operation = new Subject<void>();
+    categories.apiV1CategoriesCategoryIdPatch.mockReturnValue(operation);
+    const actionDialog = root().querySelector<HTMLDialogElement>('.action-dialog')!;
+    actionDialog.showModal = vi.fn(() => actionDialog.setAttribute('open', ''));
+    actionDialog.close = vi.fn(() => actionDialog.removeAttribute('open'));
+    root().querySelector<HTMLButtonElement>('.edit-category')!.click();
+    harness.detectChanges();
+    const input = root().querySelector<HTMLInputElement>('#category-edit-title')!;
+    input.value = 'Новая работа'; input.dispatchEvent(new Event('input'));
+    root().querySelector('.action-dialog form')!.dispatchEvent(new Event('submit', {bubbles: true, cancelable: true}));
+    operation.next(); operation.complete();
+    expect(categories.apiV1CategoriesCategoryIdGet$Json).toHaveBeenCalledTimes(2);
+    expect(TestBed.inject(Router).url).toBe('/categories/work');
+    resolveCategory('work', {...data, title: 'Новая работа'});
+    expect(root().querySelector('h1')?.textContent).toBe('Новая работа');
+    categories.apiV1CategoriesGet$Json.mockReturnValue(of([{id: 'work', title: 'Новая работа'}]));
+    mockDialog(); component.openNavigation(); harness.detectChanges();
+    expect(root().querySelector('.navigation-item-title')?.textContent).toBe('Новая работа');
+  });
+
+  it('returns to reminders only after a confirmed successful category deletion', () => {
+    resolveCategory(); resolveReminders();
+    const operation = new Subject<void>();
+    categories.apiV1CategoriesCategoryIdDelete.mockReturnValue(operation);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const actionDialog = root().querySelector<HTMLDialogElement>('.action-dialog')!;
+    actionDialog.showModal = vi.fn(() => actionDialog.setAttribute('open', ''));
+    actionDialog.close = vi.fn(() => actionDialog.removeAttribute('open'));
+    root().querySelector<HTMLButtonElement>('.delete-category')!.click();
+    harness.detectChanges();
+    expect(navigate).not.toHaveBeenCalled();
+    root().querySelector('.action-dialog form')!.dispatchEvent(new Event('submit', {bubbles: true, cancelable: true}));
+    operation.next(); operation.complete();
+    expect(navigate).toHaveBeenCalledExactlyOnceWith(['/reminders'], {replaceUrl: true});
   });
 
   it('loads the category once and fetches only its reminders after access is confirmed', () => {
@@ -194,6 +232,44 @@ describe('CategoryDetails', () => {
     resolveReminders('home', []);
     expect(root().querySelector('h1')?.textContent).toBe('Личное');
     expect(root().querySelectorAll('app-reminder-card')).toHaveLength(0);
+  });
+
+  it('saves from the edit dialog and refreshes details and the navigation title', () => {
+    resolveCategory(); resolveReminders();
+    const operation = new Subject<void>();
+    categories.apiV1CategoriesCategoryIdPatch.mockReturnValue(operation);
+    const actionDialog = root().querySelector<HTMLDialogElement>('.action-dialog')!;
+    actionDialog.showModal = vi.fn(() => actionDialog.setAttribute('open', ''));
+    actionDialog.close = vi.fn(() => actionDialog.removeAttribute('open'));
+    root().querySelector<HTMLButtonElement>('.edit-category')!.click();
+    harness.detectChanges();
+    const input = root().querySelector<HTMLInputElement>('#category-edit-title')!;
+    input.value = 'Новая работа'; input.dispatchEvent(new Event('input'));
+    root().querySelector('.action-dialog form')!.dispatchEvent(new Event('submit', {bubbles: true, cancelable: true}));
+    operation.next(); operation.complete();
+    expect(categories.apiV1CategoriesCategoryIdGet$Json).toHaveBeenCalledTimes(2);
+    expect(TestBed.inject(Router).url).toBe('/categories/work');
+    resolveCategory('work', {...data, title: 'Новая работа'});
+    expect(root().querySelector('h1')?.textContent).toBe('Новая работа');
+    categories.apiV1CategoriesGet$Json.mockReturnValue(of([{id: 'work', title: 'Новая работа'}]));
+    mockDialog(); component.openNavigation(); harness.detectChanges();
+    expect(root().querySelector('.navigation-item-title')?.textContent).toBe('Новая работа');
+  });
+
+  it('returns to reminders only after a confirmed successful category deletion', () => {
+    resolveCategory(); resolveReminders();
+    const operation = new Subject<void>();
+    categories.apiV1CategoriesCategoryIdDelete.mockReturnValue(operation);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const actionDialog = root().querySelector<HTMLDialogElement>('.action-dialog')!;
+    actionDialog.showModal = vi.fn(() => actionDialog.setAttribute('open', ''));
+    actionDialog.close = vi.fn(() => actionDialog.removeAttribute('open'));
+    root().querySelector<HTMLButtonElement>('.delete-category')!.click();
+    harness.detectChanges();
+    expect(navigate).not.toHaveBeenCalled();
+    root().querySelector('.action-dialog form')!.dispatchEvent(new Event('submit', {bubbles: true, cancelable: true}));
+    operation.next(); operation.complete();
+    expect(navigate).toHaveBeenCalledExactlyOnceWith(['/reminders'], {replaceUrl: true});
   });
 
   it('loads the category drawer lazily and reuses its list', () => {

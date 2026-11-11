@@ -1,0 +1,126 @@
+@if (canManage()) {
+  <div class="category-actions">
+    <button
+      class="edit-category"
+      type="button"
+      [disabled]="busy()"
+      (click)="open('edit')"
+      aria-haspopup="dialog"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.7"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="m16 3 5 5-12 12-6 1 1-6ZM13 6l5 5" />
+      </svg>
+      Редактировать
+    </button>
+    <button
+      class="delete-category"
+      type="button"
+      [disabled]="busy()"
+      (click)="open('delete')"
+      aria-haspopup="dialog"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.7"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6" />
+      </svg>
+      Удалить
+    </button>
+  </div>
+}
+<dialog
+  #actionDialog
+  class="action-dialog"
+  aria-labelledby="category-action-title"
+  (cancel)="onCancel($event)"
+  [attr.aria-busy]="busy()"
+>
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div class="dialog-heading">
+      <h2 id="category-action-title">
+        {{ mode() === 'edit' ? 'Редактировать категорию' : 'Удалить категорию?' }}
+      </h2>
+      <button
+        class="close-button"
+        type="button"
+        aria-label="Закрыть окно категории"
+        [disabled]="busy()"
+        (click)="close()"
+      >
+        ×
+      </button>
+    </div>
+    <div class="dialog-body">
+      @if (mode() === 'edit') {
+        <fieldset [disabled]="busy()">
+          <legend class="visually-hidden">Данные категории</legend>
+          <label for="category-edit-title">Название</label>
+          <input
+            id="category-edit-title"
+            formControlName="title"
+            aria-required="true"
+            [attr.aria-invalid]="form.controls.title.touched && form.controls.title.invalid"
+            [attr.aria-describedby]="
+              form.controls.title.touched && form.controls.title.invalid
+                ? 'category-edit-error'
+                : null
+            "
+          />
+          @if (form.controls.title.touched && form.controls.title.invalid) {
+            <p id="category-edit-error" class="field-error" role="alert">
+              Введите название категории.
+            </p>
+          }
+          <label for="category-edit-description">Описание <span>Необязательно</span></label>
+          <textarea
+            id="category-edit-description"
+            formControlName="description"
+            rows="4"
+          ></textarea>
+        </fieldset>
+      } @else {
+        <p class="record-name">{{ target()?.title }}</p>
+        <p class="delete-warning">
+          Категория и все напоминания в ней будут удалены для всех участников. Это действие нельзя
+          отменить.
+        </p>
+      }
+      @if (error(); as message) {
+        <p class="action-error" role="alert">{{ message }}</p>
+      }
+    </div>
+    <div class="dialog-actions">
+      <button type="button" autofocus [disabled]="busy()" (click)="close()">Отмена</button>
+      <button
+        class="submit-button"
+        [class.danger]="mode() === 'delete'"
+        type="submit"
+        [disabled]="busy()"
+      >
+        {{
+          mode() === 'edit'
+            ? busy()
+              ? 'Сохраняем…'
+              : 'Сохранить'
+            : busy()
+              ? 'Удаляем…'
+              : 'Удалить категорию'
+        }}
+      </button>
+    </div>
+  </form>
+</dialog>
