@@ -71,12 +71,17 @@ public class UsersController : Controller
         return File(avatar.File, contentType);
     }
 
-    [HttpGet]
-    public async Task<ActionResult<UserInfoDTO>> GetInfoAsync()
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<UserInfoDTO>> GetInfoAsync(Guid id)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-        
-        var res = await _userService.GetUserInfoAsync(userId);
+        var res = await _userService.GetUserInfoAsync(id);
+        return Ok(res);
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<UserListResponseDTO>> GetUsersAsync([FromQuery] UserGetRequestDTO dto)
+    {
+        var res = await _userService.GetUsersAsync(dto);
         return Ok(res);
     }
 }

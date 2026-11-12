@@ -11,13 +11,13 @@ public class UserRepository : IUserRepository
 {
     private readonly RemindersContext _dbContext;
     private readonly IMapper _mapper;
-    
-    public UserRepository(RemindersContext dbContext,  IMapper mapper)
+
+    public UserRepository(RemindersContext dbContext, IMapper mapper)
     {
         _dbContext = dbContext;
         _mapper = mapper;
     }
-    
+
     public async Task CreateUserAsync(User user)
     {
         _dbContext.Users.Add(user);
@@ -28,7 +28,7 @@ public class UserRepository : IUserRepository
     {
         return await _dbContext.Users.AnyAsync(u => u.Email == email);
     }
-    
+
     public async Task<bool> CheckUserByUsernameAsync(string username)
     {
         return await _dbContext.Users.AnyAsync(u => u.Username == username);
@@ -36,8 +36,8 @@ public class UserRepository : IUserRepository
 
     public async Task<User?> GetUserByUsernameOrEmailAsync(string inputString)
     {
-        var user = await _dbContext.Users.FirstOrDefaultAsync(u => (u.Email == inputString) || 
-                                                        (u.Username == inputString));
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => (u.Email == inputString) ||
+                                                                   (u.Username == inputString));
 
         return user;
     }
@@ -73,7 +73,28 @@ public class UserRepository : IUserRepository
 
         if (res == null)
             return null;
-        
+
         return _mapper.Map<UserInfoDTO>(res);
+    }
+
+    public async Task<UserListResponseDTO> GetUsersAsync(UserGetRequestDTO dto)
+    {
+        var q = CreateSearchQuery(dto);
+        var ids = await q.Select(u => u.Id).ToListAsync();
+
+        return new UserListResponseDTO { Ids = ids };
+    }
+
+    private IQueryable<User> CreateSearchQuery(UserGetRequestDTO dto)
+    {
+        var query = _dbContext.Users.AsQueryable();
+        
+        if (!string.IsNullOrWhiteSpace(dto.Email))
+            query = query.Where(u => EF.Functions.ILike(u.Email, $"%{dto.Email}%"));
+
+        if (!string.IsNullOrWhiteSpace(dto.Username))
+            query = query.Where(u => EF.Functions.ILike(u.Username, $"%{dto.Username}%"));
+
+        return query;
     }
 }

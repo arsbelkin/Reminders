@@ -15,4 +15,6 @@ public interface IUserRepository
     public Task UpdateUserAsync(User user);
     
     public Task<UserInfoDTO> GetUserInfoAsync(Guid userId);
+    
+    public Task<UserListResponseDTO> GetUsersAsync(UserGetRequestDTO dto);
 }

@@ -55,4 +55,10 @@ public class UserService : IUserService
 
         return res;
     }
+
+    public async Task<UserListResponseDTO> GetUsersAsync(UserGetRequestDTO dto)
+    {
+        var res = await _userRepository.GetUsersAsync(dto);
+        return res;
+    }
 }
