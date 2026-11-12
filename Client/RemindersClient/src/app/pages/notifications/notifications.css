@@ -1,0 +1,37 @@
+:host { display: block; flex: 1; min-width: 0; background: #f6f8fc; }
+.notifications-page { box-sizing: border-box; width: 100%; max-width: 1200px; margin: 0 auto; padding: 44px 32px 64px; }
+.page-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; margin-bottom: 28px; }
+h1 { margin: 0; color: #0f172a; font-size: clamp(24px, 3vw, 30px); line-height: 1.3; letter-spacing: -.8px; }
+.page-heading p { margin: 8px 0 0; color: #64748b; font-size: 13px; line-height: 1.6; }
+.page-actions { display: flex; align-items: center; gap: 12px; }
+.notifications-count { padding: 7px 12px; border: 1px solid #e2e8f0; border-radius: 8px; color: #64748b; background: #fff; font-size: 12px; }
+.refresh-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 10px 14px; border: 1px solid #dbe3ef; border-radius: 9px; color: #475569; background: #fff; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.refresh-button svg { width: 18px; height: 18px; }
+.refresh-button:hover:enabled { color: #2563eb; border-color: #bfdbfe; background: #eff6ff; }
+.refresh-button:disabled { opacity: .6; cursor: wait; }
+.refresh-button:focus-visible, .table-scroll:focus-visible { outline: 3px solid #93b4ff; outline-offset: 3px; }
+.table-scroll { max-width: 100%; overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; }
+table { width: 100%; min-width: 720px; border-collapse: collapse; table-layout: fixed; text-align: left; }
+.time-column { width: 25%; } .title-column { width: 35%; } .category-column, .recurrency-column { width: 20%; }
+th, td { padding: 18px 20px; overflow-wrap: anywhere; line-height: 1.6; vertical-align: top; }
+th { border-bottom: 1px solid #e2e8f0; color: #64748b; background: #f8fafc; font-size: 12px; font-weight: 600; }
+td { color: #64748b; font-size: 13px; }
+tbody tr + tr { border-top: 1px solid #f1f5f9; }
+tbody tr:hover { background: #fafbff; }
+.notification-title { color: #1e293b; font-weight: 600; }
+.notification-time { color: #475569; font-variant-numeric: tabular-nums; }
+.notification-title a { color: inherit; text-decoration: none; }
+.notification-title a:hover { color: #2563eb; text-decoration: underline; text-underline-offset: 3px; }
+.notification-title a:focus-visible { outline: 3px solid #93b4ff; outline-offset: 3px; border-radius: 2px; }
+.recurrency-label { display: inline-block; padding: 3px 8px; border-radius: 6px; color: #6366a0; background: #f1f2fb; font-size: 12px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.page-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; min-height: 300px; padding: 32px 20px; text-align: center; }
+.page-state h2 { margin: 0; color: #334155; font-size: 19px; }
+.page-state p { margin: 0; color: #64748b; font-size: 14px; line-height: 1.7; }
+.empty-icon, .state-symbol { display: grid; place-items: center; width: 52px; height: 52px; margin-bottom: 4px; border-radius: 16px; color: #8498b5; background: #eaf0f8; font-size: 28px; }
+.empty-icon svg { width: 28px; height: 28px; }
+.state-symbol { color: #dc2626; background: #fef2f2; }
+.loading-spinner { width: 28px; height: 28px; border: 3px solid #dbeafe; border-top-color: #2563eb; border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .loading-spinner { animation: none; } }
+@media (max-width: 600px) { .notifications-page { padding: 28px 16px 40px; } .page-heading { gap: 16px; } }

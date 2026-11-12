@@ -1,0 +1,46 @@
+<section class="notifications-page" aria-labelledby="notifications-title">
+  @let current = state();
+  <div class="page-heading">
+    <div><h1 id="notifications-title">Уведомления</h1><p>Ваши уведомления о напоминаниях</p></div>
+    <div class="page-actions">
+      @if (current.kind === 'ready') { <span class="notifications-count">{{ current.notifications.length }} всего</span> }
+      <button class="refresh-button" type="button" [disabled]="current.kind === 'loading'" (click)="reload()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 4v6h-6M20 10a8 8 0 1 0 .4 6"/></svg>
+        Обновить
+      </button>
+    </div>
+  </div>
+  @if (current.kind === 'loading') {
+    <div class="page-state" role="status"><span class="loading-spinner" aria-hidden="true"></span><p>Загружаем уведомления…</p></div>
+  } @else if (current.kind === 'error') {
+    <div class="page-state" role="alert"><span class="state-symbol" aria-hidden="true">!</span>
+      <h2>Не удалось загрузить уведомления</h2><p>Проверьте соединение и попробуйте ещё раз.</p>
+      <button class="refresh-button" type="button" (click)="reload()">Повторить загрузку</button>
+    </div>
+  } @else if (current.notifications.length === 0) {
+    <div class="page-state"><span class="empty-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+    </span><h2>Уведомлений пока нет</h2><p>Здесь появятся ваши уведомления о напоминаниях.</p></div>
+  } @else {
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Таблица уведомлений">
+      <table>
+        <caption class="visually-hidden">Список ваших уведомлений</caption>
+        <thead><tr><th scope="col" class="time-column">Дата и время</th><th scope="col" class="title-column">Напоминание</th><th scope="col" class="category-column">Категория</th><th scope="col" class="recurrency-column">Повторение</th></tr></thead>
+        <tbody>
+          @for (notification of current.notifications; track $index) {
+            <tr>
+              <td class="notification-time">{{ formatDate(notification.notificationTime) }}</td>
+              <td class="notification-title">
+                @if (notification.id) {
+                  <a [routerLink]="['/notifications', notification.id]" title="Открыть уведомление">{{ notification.reminderTitle?.trim() || 'Без названия' }}</a>
+                } @else { {{ notification.reminderTitle?.trim() || 'Без названия' }} }
+              </td>
+              <td>{{ notification.categoryTitle?.trim() || 'Без категории' }}</td>
+              <td><span class="recurrency-label">{{ formatRecurrency(notification.recurrency) }}</span></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

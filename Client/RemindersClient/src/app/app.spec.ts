@@ -61,6 +61,7 @@ describe('App account menu', () => {
     const root = mount();
     expect(root.querySelector('.header__name')?.textContent).toBe('Reminders');
     expect(root.querySelector('app-account-menu')).toBeNull();
+    expect(root.querySelector('.header__notifications')).toBeNull();
     http.expectNone(avatarEndpoint);
   });
 
@@ -171,10 +172,12 @@ describe('App account menu', () => {
     signIn();
     const root = mount();
     flushAvatar();
+    expect(root.querySelector<HTMLAnchorElement>('.header__notifications')?.getAttribute('href')).toBe('/notifications');
     localStorage.removeItem('X-Access-Token');
     window.dispatchEvent(new StorageEvent('storage', {key: 'X-Access-Token', storageArea: localStorage}));
     fixture.detectChanges();
     expect(root.querySelector('app-account-menu')).toBeNull();
+    expect(root.querySelector('.header__notifications')).toBeNull();
     expect(TestBed.inject(TokenStorageService).token()).toBeNull();
   });
 });

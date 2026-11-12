@@ -7,6 +7,18 @@ import { CategoryDetails } from './pages/category-details/category-details';
 
 export const routes: Routes = [
     {
+        path: 'notifications/:id',
+        loadComponent: () => import('./pages/notification-details/notification-details').then(module => module.NotificationDetails),
+        canActivate: [authGuard],
+        title: 'Уведомление — Reminders'
+    },
+    {
+        path: 'notifications',
+        loadComponent: () => import('./pages/notifications/notifications').then(module => module.Notifications),
+        canActivate: [authGuard],
+        title: 'Уведомления — Reminders'
+    },
+    {
         path: '',
         redirectTo: 'reminders',
         pathMatch: 'full'

@@ -1,0 +1,103 @@
+<section class="details-page" aria-label="Детали уведомления">
+  <div class="details-toolbar">
+    <a class="back-link" routerLink="/notifications">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 5-7 7 7 7M3 12h18"/></svg>
+      Уведомления
+    </a>
+    <div class="notification-toolbar-actions">
+      <button class="navigation-button" type="button" (click)="openNavigation()" aria-haspopup="dialog" [disabled]="notificationActions.busy()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M13 9h4M13 13h4"/></svg>
+        Список уведомлений
+      </button>
+      <button class="navigation-button" type="button" [disabled]="state().kind === 'loading' || notificationActions.busy()" (click)="reload()">Обновить</button>
+      <app-notification-actions #notificationActions [notification]="currentNotification()" [notificationId]="notificationId()"
+        (saved)="onSaved($event)" (deleted)="onDeleted($event)" />
+    </div>
+  </div>
+  @let current = state();
+  @if (current.kind === 'loading') {
+    <div class="details-state" role="status"><span class="loading-spinner" aria-hidden="true"></span><p>Загружаем уведомление…</p></div>
+  } @else if (current.kind === 'missing') {
+    <div class="details-state"><span class="state-symbol" aria-hidden="true">!</span>
+      <h1>Уведомление не найдено</h1><p>Возможно, оно удалено или у вас нет доступа к нему.</p>
+      <a class="back-link" routerLink="/notifications">Вернуться к уведомлениям</a>
+    </div>
+  } @else if (current.kind === 'error') {
+    <div class="details-state" role="alert"><span class="state-symbol" aria-hidden="true">!</span>
+      <h1>Не удалось загрузить уведомление</h1><p>Проверьте соединение и попробуйте ещё раз.</p>
+      <button class="retry-button" type="button" (click)="reload()">Попробовать снова</button>
+    </div>
+  } @else {
+    @let notification = current.notification;
+    <div class="details-layout">
+      <article class="details-card">
+        <div class="details-heading">
+          <span class="category-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+            Уведомление
+          </span>
+          <h1>{{ notification.reminderTitle?.trim() || 'Без названия' }}</h1>
+          <span class="category-label">
+            @if (notification.categoryId) {
+              <a [routerLink]="['/categories', notification.categoryId]">{{ notification.categoryTitle?.trim() || 'Без категории' }}</a>
+            } @else { {{ notification.categoryTitle?.trim() || 'Без категории' }} }
+          </span>
+        </div>
+        <section class="details-section" aria-labelledby="notification-description-title">
+          <h2 id="notification-description-title">Описание напоминания</h2>
+          <p class="description-text" [class.empty-text]="!notification.reminderDescription?.trim()">{{ notification.reminderDescription?.trim() || 'Описание не добавлено.' }}</p>
+        </section>
+        @if (notification.reminderId) {
+          <section class="details-section">
+            <a class="back-link" [routerLink]="['/reminders', notification.reminderId]">Открыть напоминание →</a>
+          </section>
+        }
+      </article>
+      <aside class="details-meta" aria-label="Параметры уведомления">
+        <h2>Сведения</h2>
+        <dl>
+          <div><dt>Дата и время уведомления</dt><dd>{{ formatDate(notification.notificationTime) }}</dd></div>
+          <div><dt>Повторение</dt><dd>{{ formatRecurrency(notification.recurrency) }}</dd></div>
+        </dl>
+      </aside>
+    </div>
+  }
+</section>
+
+<dialog #navigationDialog class="navigation-dialog" aria-labelledby="notification-navigation-title">
+  <div class="navigation-heading">
+    <div><h2 id="notification-navigation-title">Уведомления</h2><p>Переключайтесь между уведомлениями</p></div>
+    <button class="navigation-close" type="button" aria-label="Закрыть список уведомлений" (click)="closeNavigation()" autofocus>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+    </button>
+  </div>
+  <label class="navigation-search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+    <input type="search" [formControl]="navigationSearch" placeholder="Поиск уведомления…" aria-label="Поиск в списке уведомлений" />
+  </label>
+  <div class="navigation-content">
+    @let drawerState = state();
+    @if (drawerState.kind === 'loading') {
+      <p class="navigation-state" role="status">Загружаем уведомления…</p>
+    } @else if (drawerState.kind === 'error') {
+      <div class="navigation-state" role="alert"><p>Не удалось загрузить список уведомлений.</p>
+        <button class="retry-button" type="button" (click)="reload()">Попробовать снова</button>
+      </div>
+    } @else {
+      <nav aria-label="Переключение уведомлений">
+        @for (item of filteredNotifications(); track $index) {
+          <a class="navigation-item" [routerLink]="['/notifications', item.id]" (click)="closeNavigation()"
+            [attr.aria-current]="item.id?.toLowerCase() === notificationId().toLowerCase() ? 'page' : null">
+            <svg class="navigation-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+            <span class="navigation-copy"><span class="navigation-item-title">{{ item.reminderTitle?.trim() || 'Без названия' }}</span>
+              <span class="navigation-category">{{ item.categoryTitle?.trim() || 'Без категории' }}</span>
+              <span class="navigation-category">{{ formatDate(item.notificationTime) }}</span>
+            </span>
+          </a>
+        } @empty {
+          <p class="navigation-state">{{ navigationSearch.value.trim() ? 'Ничего не найдено. Измените запрос.' : 'Уведомлений пока нет.' }}</p>
+        }
+      </nav>
+    }
+  </div>
+</dialog>
