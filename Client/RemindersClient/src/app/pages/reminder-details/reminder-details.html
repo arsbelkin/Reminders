@@ -6,31 +6,33 @@
       Мои напоминания
     </a>
     <div class="details-actions">
-    <button class="navigation-button" type="button" (click)="openNavigation()" aria-haspopup="dialog" [disabled]="isDeleting() || isCompleting() || reminderEditWindow.isSaving()">
+    <button class="navigation-button" type="button" (click)="openNavigation()" aria-haspopup="dialog" [disabled]="isDeleting() || isCompleting() || reminderEditWindow.isSaving() || notificationCreateWindow.busy()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
         aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16M13 9h4M13 13h4" /></svg>
       Список напоминаний
     </button>
+    <app-notification-create #notificationCreateWindow [reminder]="editableReminder()" [reminderId]="reminderId()"
+      [disabled]="isDeleting() || isCompleting() || reminderEditWindow.isSaving()" (created)="onNotificationCreated($event)" />
     @if (canComplete()) {
-      <button class="complete-button" type="button" (click)="completeReminder()" [disabled]="isCompleting() || isDeleting() || reminderEditWindow.isSaving()" [attr.aria-busy]="isCompleting()">
+      <button class="complete-button" type="button" (click)="completeReminder()" [disabled]="isCompleting() || isDeleting() || reminderEditWindow.isSaving() || notificationCreateWindow.busy()" [attr.aria-busy]="isCompleting()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
         {{ isCompleting() ? 'Завершаем…' : 'Завершить' }}
       </button>
     }
     @if (canDelete()) {
       <button class="navigation-button edit-reminder-button" type="button" aria-haspopup="dialog"
-        [disabled]="isDeleting() || isCompleting() || reminderEditWindow.isSaving()" (click)="reminderEditWindow.open()">
+        [disabled]="isDeleting() || isCompleting() || reminderEditWindow.isSaving() || notificationCreateWindow.busy()" (click)="reminderEditWindow.open()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 3 5 5-12 12-6 1 1-6ZM13 6l5 5"/></svg>
         Редактировать
       </button>
       @if (canReopen()) {
         <button class="complete-button reopen-button" type="button" (click)="reopenReminder()"
-          [disabled]="isCompleting() || isDeleting() || reminderEditWindow.isSaving()" [attr.aria-busy]="isCompleting()">
+          [disabled]="isCompleting() || isDeleting() || reminderEditWindow.isSaving() || notificationCreateWindow.busy()" [attr.aria-busy]="isCompleting()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4v6h6M3.8 10a8 8 0 1 1 .7 7"/></svg>
           {{ isCompleting() ? 'Возобновляем…' : 'Возобновить' }}
         </button>
       }
-      <button class="delete-button" type="button" (click)="openDelete()" [disabled]="isDeleting() || isCompleting() || reminderEditWindow.isSaving()" aria-haspopup="dialog">
+      <button class="delete-button" type="button" (click)="openDelete()" [disabled]="isDeleting() || isCompleting() || reminderEditWindow.isSaving() || notificationCreateWindow.busy()" aria-haspopup="dialog">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6" />
@@ -41,6 +43,11 @@
     </div>
   </div>
 
+  @if (notificationCreated(); as result) {
+    <p class="notification-success" role="status">Уведомление создано.
+      <a [routerLink]="result.id ? ['/notifications', result.id] : ['/notifications']">{{ result.id ? 'Открыть уведомление' : 'К уведомлениям' }}</a>
+    </p>
+  }
   @if (completionError(); as message) { <p class="completion-error" role="alert">{{ message }}</p> }
   @let current = state();
   @if (current.kind === 'loading') {
@@ -156,7 +163,7 @@
 </dialog>
 
 <app-reminder-edit #reminderEditWindow [reminder]="editableReminder()" [reminderId]="reminderId()"
-  [disabled]="isCompleting() || isDeleting()" (saved)="onReminderSaved($event)" />
+  [disabled]="isCompleting() || isDeleting() || notificationCreateWindow.busy()" (saved)="onReminderSaved($event)" />
 
 <dialog #deleteDialog class="delete-dialog" aria-labelledby="delete-title" aria-describedby="delete-description"
   [attr.aria-busy]="isDeleting()" (cancel)="onDeleteCancel($event)">

@@ -1,0 +1,44 @@
+@if (canCreate()) {
+  <div class="category-actions">
+    <button class="edit-category create-notification" type="button" [disabled]="busy() || disabled()" (click)="open()" aria-haspopup="dialog">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/><path d="M12 6v6M9 9h6"/></svg>
+      Создать уведомление
+    </button>
+  </div>
+}
+<dialog #createDialog class="action-dialog notification-create-dialog" aria-labelledby="notification-create-title" (cancel)="onCancel($event)" [attr.aria-busy]="busy()">
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div class="dialog-heading">
+      <h2 id="notification-create-title">Новое уведомление</h2>
+      <button class="close-button" type="button" aria-label="Закрыть создание уведомления" [disabled]="busy()" (click)="close()">×</button>
+    </div>
+    <div class="dialog-body">
+      <p class="record-name">{{ target()?.title }}</p>
+      <p class="personal-hint">Уведомление для вашего аккаунта</p>
+      <fieldset [disabled]="busy()">
+        <legend class="visually-hidden">Параметры уведомления</legend>
+        <label for="notification-create-time">Дата и время</label>
+        <input id="notification-create-time" type="datetime-local" formControlName="notificationTime" aria-required="true" autofocus
+          [attr.aria-invalid]="form.controls.notificationTime.touched && form.controls.notificationTime.invalid"
+          [attr.aria-describedby]="form.controls.notificationTime.touched && form.controls.notificationTime.invalid ? 'notification-create-time-error' : null" />
+        @if (form.controls.notificationTime.touched && form.controls.notificationTime.invalid) {
+          <p class="field-error" id="notification-create-time-error" role="alert">Укажите корректные дату и время.</p>
+        }
+        <label for="notification-create-recurrency">Повторение</label>
+        <select id="notification-create-recurrency" formControlName="recurrency"
+          [attr.aria-invalid]="form.controls.recurrency.touched && form.controls.recurrency.invalid"
+          [attr.aria-describedby]="form.controls.recurrency.touched && form.controls.recurrency.invalid ? 'notification-create-recurrency-error' : null">
+          @for (option of recurrencyOptions; track option.value) { <option [ngValue]="option.value">{{ option.label }}</option> }
+        </select>
+        @if (form.controls.recurrency.touched && form.controls.recurrency.invalid) {
+          <p class="field-error" id="notification-create-recurrency-error" role="alert">Выберите периодичность.</p>
+        }
+      </fieldset>
+      @if (error(); as message) { <p class="action-error" role="alert">{{ message }}</p> }
+    </div>
+    <div class="dialog-actions">
+      <button type="button" [disabled]="busy()" (click)="close()">Отмена</button>
+      <button class="submit-button" type="submit" [disabled]="busy()">{{ busy() ? 'Создаём…' : 'Создать уведомление' }}</button>
+    </div>
+  </form>
+</dialog>

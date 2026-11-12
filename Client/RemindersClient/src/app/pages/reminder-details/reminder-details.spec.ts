@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Subject, of } from 'rxjs';
-import { CategoriesService, RemindersService } from '../../api/services';
+import { CategoriesService, RemindersService, NotificationsService } from '../../api/services';
 import { ReminderInfoViewDto } from '../../api/models/reminder-info-view-dto';
 import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
 import { authGuard } from '../../auth/auth.guard';
@@ -16,6 +16,8 @@ import { ReminderDetails } from './reminder-details';
 
 describe('ReminderDetails', () => {
   const api = {apiV1RemindersReminderIdGet$Json: vi.fn(), apiV1RemindersGet$Json: vi.fn(), apiV1RemindersReminderIdDelete: vi.fn(), apiV1RemindersReminderIdCompletePost: vi.fn(), apiV1RemindersReminderIdReopenPost: vi.fn(), apiV1RemindersReminderIdPatch: vi.fn()};
+  const notificationsApi = {apiV1NotificationsPost$Json: vi.fn()};
+  let notificationCreation: Subject<{id: string}>;
   let deletion: Subject<void>;
   let completion: Subject<void>;
   let reopening: Subject<void>;
@@ -40,7 +42,7 @@ describe('ReminderDetails', () => {
     harness.detectChanges();
   }
   function mockDialog(): HTMLDialogElement {
-    const dialog = root().querySelector('dialog')!;
+    const dialog = root().querySelector<HTMLDialogElement>('.navigation-dialog')!;
     dialog.showModal = vi.fn(() => dialog.setAttribute('open', ''));
     dialog.close = vi.fn(() => dialog.removeAttribute('open'));
     return dialog;
@@ -55,6 +57,8 @@ describe('ReminderDetails', () => {
 
   beforeEach(async () => {
     allowed = true;
+    notificationCreation = new Subject<{id: string}>();
+    notificationsApi.apiV1NotificationsPost$Json.mockReset().mockReturnValue(notificationCreation);
     currentUserId = signal('owner');
     sessionToken = signal('token');
     deletion = new Subject<void>();
@@ -76,6 +80,7 @@ describe('ReminderDetails', () => {
     TestBed.configureTestingModule({
       providers: [
         {provide: RemindersService, useValue: api},
+        {provide: NotificationsService, useValue: notificationsApi},
         {provide: CategoriesService, useValue: {apiV1CategoriesGet$Json: () => of([{id: 'work', title: 'Работа'}])}},
         {provide: TokenStorageService, useValue: {getToken: () => allowed ? sessionToken() : null, token: sessionToken, userId: currentUserId}},
         provideRouter([
@@ -87,6 +92,32 @@ describe('ReminderDetails', () => {
     });
     harness = await RouterTestingHarness.create();
     component = await harness.navigateByUrl('/reminders/first', ReminderDetails);
+  });
+
+  it('creates a notification for a participant and stays on the reminder with a success link', () => {
+    currentUserId.set('participant'); resolve('first', data);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const dialog = root().querySelector<HTMLDialogElement>('.notification-create-dialog')!;
+    dialog.showModal = vi.fn(() => dialog.setAttribute('open', '')); dialog.close = vi.fn(() => dialog.removeAttribute('open'));
+    root().querySelector<HTMLButtonElement>('.create-notification')!.click(); harness.detectChanges();
+    root().querySelector('.notification-create-dialog form')!.dispatchEvent(new Event('submit', {bubbles: true, cancelable: true}));
+    harness.detectChanges();
+    expect(root().querySelector<HTMLButtonElement>('.create-notification')!.disabled).toBe(true);
+    notificationCreation.next({id: 'notification-new'}); notificationCreation.complete(); harness.detectChanges();
+    expect(navigate).not.toHaveBeenCalled(); expect(root().querySelector('h1')?.textContent).toBe(data.title);
+    expect(root().querySelector('.notification-success')?.textContent).toContain('Уведомление создано');
+    expect(root().querySelector('.notification-success a')?.getAttribute('href')).toBe('/notifications/notification-new');
+  });
+
+  it('ignores a late creation response on another reminder page', async () => {
+    resolve('first', data);
+    const dialog = root().querySelector<HTMLDialogElement>('.notification-create-dialog')!;
+    dialog.showModal = vi.fn(() => dialog.setAttribute('open', '')); dialog.close = vi.fn(() => dialog.removeAttribute('open'));
+    root().querySelector<HTMLButtonElement>('.create-notification')!.click();
+    root().querySelector('.notification-create-dialog form')!.dispatchEvent(new Event('submit', {bubbles: true, cancelable: true}));
+    await harness.navigateByUrl('/reminders/second', ReminderDetails); resolve('second', {...data, id: 'second'});
+    notificationCreation.next({id: 'notification-new'}); notificationCreation.complete(); harness.detectChanges();
+    expect(root().querySelector('.notification-success')).toBeNull();
   });
 
   it('reopens once and refreshes the same detail page', () => {

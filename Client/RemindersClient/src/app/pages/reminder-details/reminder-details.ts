@@ -28,6 +28,7 @@ import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
 import { PRIORITY_LABELS } from '../../shared/reminder-labels';
 import { TokenStorageService } from '../../auth/token-storage.service';
 import { ReminderEdit } from '../../components/reminder-edit/reminder-edit';
+import { NotificationCreate, NotificationCreated } from '../../components/notification-create/notification-create';
 
 type DetailState =
   | { kind: 'loading' }
@@ -36,7 +37,7 @@ type DetailState =
 
 @Component({
   selector: 'app-reminder-details',
-  imports: [RouterLink, ReactiveFormsModule, ReminderEdit],
+  imports: [RouterLink, ReactiveFormsModule, ReminderEdit, NotificationCreate],
   templateUrl: './reminder-details.html',
   styleUrls: [
     '../../shared/reminder-badges.css',
@@ -46,6 +47,12 @@ type DetailState =
   ],
 })
 export class ReminderDetails {
+  private readonly notificationWindow = viewChild.required<NotificationCreate>('notificationCreateWindow');
+  readonly notificationCreated = signal<NotificationCreated | null>(null);
+
+  onNotificationCreated(result: NotificationCreated): void {
+    if (result.reminderId === this.reminderId()) this.notificationCreated.set(result);
+  }
   private readonly editWindow = viewChild.required<ReminderEdit>('reminderEditWindow');
   private readonly router = inject(Router);
   private readonly tokenStorage = inject(TokenStorageService);
@@ -146,7 +153,7 @@ export class ReminderDetails {
   }
 
   private changeCompletion(reopen: boolean): void {
-    if (!(reopen ? this.canReopen() : this.canComplete()) || this.isCompleting() || this.isDeleting() || this.editWindow().isSaving()) return;
+    if (!(reopen ? this.canReopen() : this.canComplete()) || this.isCompleting() || this.isDeleting() || this.editWindow().isSaving() || this.notificationWindow().busy()) return;
     const id = this.reminderId();
     const ownerId = this.tokenStorage.userId();
     this.isCompleting.set(true);
@@ -180,6 +187,7 @@ export class ReminderDetails {
     effect(() => {
       this.reminderId();
       this.completionError.set(null);
+      this.notificationCreated.set(null);
     });
     effect(() => {
       const target = this.deleteTarget();
@@ -193,7 +201,7 @@ export class ReminderDetails {
 
   openDelete(): void {
     const current = this.state();
-    if (this.isDeleting() || this.isCompleting() || this.editWindow().isSaving() || !this.canDelete() || current.kind !== 'ready') return;
+    if (this.isDeleting() || this.isCompleting() || this.editWindow().isSaving() || this.notificationWindow().busy() || !this.canDelete() || current.kind !== 'ready') return;
     this.deleteTarget.set({id: this.reminderId(), title: current.reminder.title || 'Без названия'});
     this.deleteError.set(null);
     this.deleteDialog().nativeElement.showModal();
