@@ -36,6 +36,7 @@ export class AccountMenu {
   constructor() {
     effect((onCleanup) => {
       const token = this.tokenStorage.token();
+      this.avatars.revision();
       this.menuOpen.set(false);
       this.avatarUrl.set(null);
       if (!token) return;

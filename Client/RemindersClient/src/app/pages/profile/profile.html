@@ -5,7 +5,7 @@
       Мои напоминания
     </a>
     @if (state().kind !== 'signedOut') {
-      <button class="navigation-button" type="button" [disabled]="state().kind === 'loading' || !!editing()" (click)="reload()">Обновить</button>
+      <button class="navigation-button" type="button" [disabled]="state().kind === 'loading' || !!editing() || avatarEditorControl()?.busy()" (click)="reload()">Обновить</button>
     }
   </div>
   <h1 id="profile-title" class="profile-title">Мой профиль</h1>
@@ -23,17 +23,18 @@
     <article class="details-card profile-card" aria-label="Данные аккаунта">
       <div class="profile-hero">
         <div class="profile-avatar" aria-hidden="true">
-          @if (avatarUrl(); as url) { <img [src]="url" alt="" (error)="avatarUrl.set(null)" /> }
+          @if (avatarPreviewUrl() || avatarUrl(); as url) { <img [src]="url" alt="" (error)="avatarPreviewUrl() ? avatarEditor.rejectPreview() : avatarUrl.set(null)" /> }
           @else { <svg class="profile-default-avatar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg> }
         </div>
         <div class="profile-identity"><h2>{{ current.user.username?.trim() || 'Пользователь' }}</h2><p>{{ current.user.email?.trim() || 'Email не указан' }}</p>
+          <app-avatar-editor #avatarEditor [hasAvatar]="hasAvatar()" [disabled]="busy()" (previewChange)="avatarPreviewUrl.set($event)" />
         </div>
       </div>
       <section class="details-section" aria-labelledby="profile-data-title">
         <div class="profile-section-heading">
           <h2 id="profile-data-title">Личные данные</h2>
           @if (!editing()) {
-            <button class="navigation-button" type="button" (click)="openEditor()">
+            <button class="navigation-button" type="button" [disabled]="avatarEditorControl()?.busy()" (click)="openEditor()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 3 5 5-12 12-6 1 1-6ZM13 6l5 5"/></svg>
               Редактировать
             </button>
@@ -70,7 +71,7 @@
             @if (saveError(); as message) { <p class="profile-save-error" role="alert">{{ message }}</p> }
             <div class="profile-edit-actions">
               <button class="navigation-button" type="button" [disabled]="busy()" (click)="cancelEdit()">Отмена</button>
-              <button class="retry-button" type="submit" [disabled]="busy() || formStatus() !== 'VALID' || !changed()">{{ busy() ? 'Сохраняем…' : 'Сохранить' }}</button>
+              <button class="retry-button" type="submit" [disabled]="busy() || avatarEditorControl()?.busy() || formStatus() !== 'VALID' || !changed()">{{ busy() ? 'Сохраняем…' : 'Сохранить' }}</button>
             </div>
           </form>
         } @else {

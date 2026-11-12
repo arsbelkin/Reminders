@@ -46,7 +46,7 @@ export class CategoryActions {
     return !!userId && this.category()?.creatorId?.trim().toLowerCase() === userId;
   });
   readonly form = new FormGroup({
-    usersEmails: new FormControl<string[]>([], {nonNullable: true}),
+    usersEmails: new FormControl<string[]>([], { nonNullable: true }),
     title: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(/\S/)],
@@ -80,7 +80,11 @@ export class CategoryActions {
       title: category.title || 'Без названия',
       ownerId,
     });
-    this.form.reset({ title: category.title ?? '', description: category.description ?? '', usersEmails: [...(category.usersEmails ?? [])] });
+    this.form.reset({
+      title: category.title ?? '',
+      description: category.description ?? '',
+      usersEmails: [...(category.usersEmails ?? [])],
+    });
     this.error.set(null);
     this.dialog().nativeElement.showModal();
   }

@@ -1,0 +1,20 @@
+:host { display: block; margin-top: 16px; }
+.avatar-controls { min-width: 0; }
+.avatar-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; padding: 8px 12px; border: 1px solid #dbe3ef; border-radius: 8px; background: #fff; color: #475569; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+button.select-avatar { color: #2563eb; border-color: #bfdbfe; }
+button.save-avatar { color: #fff; border-color: #2563eb; background: #2563eb; }
+button.delete-avatar { color: #dc2626; border-color: #fecaca; }
+button:hover:enabled { filter: brightness(.97); }
+button:focus-visible { outline: 3px solid #93b4ff; outline-offset: 3px; }
+button:disabled { opacity: .6; cursor: wait; }
+button svg { width: 17px; height: 17px; }
+.avatar-hint { margin: 8px 0 0; color: #94a3b8; font-size: 11px; line-height: 1.6; }
+.avatar-file { margin: 0 0 10px; color: #64748b; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.avatar-file span { color: #475569; }
+.avatar-error, .avatar-success { margin: 10px 0 0; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.avatar-error { color: #b91c1c; }
+.avatar-success { color: #15803d; }
+.avatar-spinner { width: 12px; height: 12px; border: 2px solid #ffffff66; border-top-color: #fff; border-radius: 50%; animation: avatar-spin .8s linear infinite; }
+@keyframes avatar-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .avatar-spinner { animation: none; } }

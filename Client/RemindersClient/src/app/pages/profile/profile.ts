@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { AsyncValidatorFn, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -8,12 +8,13 @@ import { UserInfoDto } from '../../api/models/user-info-dto';
 import { TokenStorageService } from '../../auth/token-storage.service';
 import { UserAvatarService } from '../../auth/user-avatar.service';
 import { ProfileApiService, ProfileField, ProfileUpdate } from '../../auth/profile-api.service';
+import { AvatarEditor } from '../../components/avatar-editor/avatar-editor';
 
 type ProfileState = {kind: 'loading' | 'error' | 'signedOut'} | {kind: 'ready'; user: UserInfoDto};
 
 @Component({
   selector: 'app-profile',
-  imports: [RouterLink, ReactiveFormsModule],
+  imports: [RouterLink, ReactiveFormsModule, AvatarEditor],
   templateUrl: './profile.html',
   styleUrls: ['../../shared/details-page.css', './profile.css'],
 })
@@ -47,6 +48,9 @@ export class Profile {
     return !!original && (values.username.trim() !== original.username || values.email.trim() !== original.email);
   });
   readonly avatarUrl = signal<string | null>(null);
+  readonly hasAvatar = signal(false);
+  readonly avatarPreviewUrl = signal<string | null>(null);
+  readonly avatarEditorControl = viewChild(AvatarEditor);
   readonly state = toSignal(combineLatest([
     toObservable(this.session.token), toObservable(this.reloadVersion),
   ]).pipe(switchMap(([token]) => !token ? of<ProfileState>({kind: 'signedOut'})
@@ -72,11 +76,13 @@ export class Profile {
     effect(onCleanup => {
       const token = this.session.token();
       this.reloadVersion();
+      this.avatars.revision();
       this.avatarUrl.set(null);
+      this.hasAvatar.set(false);
       if (!token) return;
       let objectUrl: string | null = null;
       const request = this.avatars.getAvatar().subscribe({
-        next: blob => { objectUrl = URL.createObjectURL(blob); this.avatarUrl.set(objectUrl); },
+        next: blob => { objectUrl = URL.createObjectURL(blob); this.avatarUrl.set(objectUrl); this.hasAvatar.set(true); },
         error: () => this.avatarUrl.set(null),
       });
       onCleanup(() => {
@@ -87,13 +93,13 @@ export class Profile {
   }
 
   reload(): void {
-    if (this.state().kind !== 'loading' && !this.editing()) this.reloadVersion.update(value => value + 1);
+    if (this.state().kind !== 'loading' && !this.editing() && !this.avatarEditorControl()?.busy()) this.reloadVersion.update(value => value + 1);
   }
 
   openEditor(): void {
     const current = this.state();
     const token = this.session.token();
-    if (current.kind !== 'ready' || !token || this.busy()) return;
+    if (current.kind !== 'ready' || !token || this.busy() || this.avatarEditorControl()?.busy()) return;
     const original = {username: current.user.username?.trim() ?? '', email: current.user.email?.trim() ?? ''};
     this.editing.set({token, original});
     this.form.reset(original);
@@ -115,7 +121,7 @@ export class Profile {
   submit(): void {
     const target = this.editing();
     this.form.markAllAsTouched();
-    if (!target || target.token !== this.session.token() || this.busy() || !this.form.valid || !this.changed()) return;
+    if (!target || target.token !== this.session.token() || this.busy() || this.avatarEditorControl()?.busy() || !this.form.valid || !this.changed()) return;
     const values = this.form.getRawValue();
     this.busy.set(true);
     this.saveError.set(null);

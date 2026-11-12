@@ -6,6 +6,7 @@ import { App } from './app';
 import { TokenStorageService } from './auth/token-storage.service';
 import { authInterceptor } from './auth/auth.interceptor';
 import { provideApiConfiguration } from './api/api-configuration';
+import { UserAvatarService } from './auth/user-avatar.service';
 
 describe('App account menu', () => {
   const avatarEndpoint = 'http://localhost:5041/api/v1/Users/avatar';
@@ -96,6 +97,26 @@ describe('App account menu', () => {
     flushAvatar();
     expect(root.querySelector('.account-button')).not.toBeNull();
     expect(root.querySelector('img')).not.toBeNull();
+  });
+
+  it('refreshes the header avatar immediately after uploading a new image', () => {
+    signIn(); const root = mount(); flushAvatar();
+    createUrl.mockReturnValue('blob:new-avatar');
+    TestBed.inject(UserAvatarService).uploadAvatar(new File(['new'], 'avatar.png', {type: 'image/png'})).subscribe();
+    http.expectOne(avatarEndpoint).flush(null); fixture.detectChanges();
+    http.expectOne(avatarEndpoint + '?v=1').flush(new Blob(['new'], {type: 'image/png'})); fixture.detectChanges();
+    expect(root.querySelector('img')?.getAttribute('src')).toBe('blob:new-avatar');
+    expect(revokeUrl).toHaveBeenCalledWith('blob:test-avatar');
+  });
+
+  it('replaces a deleted header avatar with the default icon', () => {
+    signIn(); const root = mount(); flushAvatar();
+    TestBed.inject(UserAvatarService).deleteAvatar().subscribe();
+    const deletion = http.expectOne(avatarEndpoint); expect(deletion.request.method).toBe('DELETE');
+    deletion.flush(null); fixture.detectChanges();
+    http.expectOne(avatarEndpoint + '?v=1').flush(null, {status: 404, statusText: 'No avatar'}); fixture.detectChanges();
+    expect(root.querySelector('img')).toBeNull(); expect(root.querySelector('.default-avatar')).not.toBeNull();
+    expect(revokeUrl).toHaveBeenCalledWith('blob:test-avatar');
   });
 
   it.each([404, 500])('keeps the default avatar and session on HTTP %s', status => {

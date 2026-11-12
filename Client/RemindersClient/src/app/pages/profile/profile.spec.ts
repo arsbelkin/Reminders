@@ -21,7 +21,7 @@ describe('Profile', () => {
   let token = signal<string | null>('token');
   const api = {apiV1UsersIdGet$Json: vi.fn()};
   const profileApi = {checkAvailability: vi.fn(), updateProfile: vi.fn()};
-  const avatars = {getAvatar: vi.fn()};
+  const avatars = {getAvatar: vi.fn(), uploadAvatar: vi.fn(), deleteAvatar: vi.fn(), revision: signal(0)};
   const createUrl = vi.fn(() => 'blob:profile-test');
   const revokeUrl = vi.fn();
   const data = {id: 'one', username: 'anna', email: 'anna@example.test'};
@@ -33,6 +33,7 @@ describe('Profile', () => {
   const resolve = (user: UserInfoDto = data) => { response.next(user); response.complete(); harness.detectChanges(); };
 
   beforeEach(async () => {
+    avatars.revision.set(0); avatars.uploadAvatar.mockReset(); avatars.deleteAvatar.mockReset();
     token = signal('token'); api.apiV1UsersIdGet$Json.mockReset(); avatars.getAvatar.mockReset();
     profileApi.checkAvailability.mockReset().mockReturnValue(of({usernameAvailable: true, emailAvailable: true}));
     profileApi.updateProfile.mockReset();
@@ -81,6 +82,45 @@ describe('Profile', () => {
     resolve(); avatar.next(new Blob(['bad-image'])); harness.detectChanges();
     root().querySelector('img')!.dispatchEvent(new Event('error')); harness.detectChanges();
     expect(root().querySelector('.profile-default-avatar')).not.toBeNull();
+    expect(root().querySelector('.delete-avatar')).not.toBeNull();
+  });
+
+  it('deletes the saved photo and falls back to the default icon without reloading profile data', () => {
+    resolve(); expect(root().querySelector('.delete-avatar')).toBeNull();
+    avatar.next(new Blob(['old'])); avatar.complete(); harness.detectChanges();
+    const deletion = new Subject<void>(); avatars.deleteAvatar.mockReturnValue(deletion);
+    root().querySelector<HTMLButtonElement>('.delete-avatar')!.click(); harness.detectChanges();
+    const removed = new Subject<Blob>(); avatars.getAvatar.mockReturnValue(removed);
+    avatars.revision.update(value => value + 1); deletion.next(); deletion.complete();
+    harness.detectChanges(); TestBed.tick(); removed.error({status: 404}); harness.detectChanges();
+    expect(root().querySelector('.profile-default-avatar')).not.toBeNull();
+    expect(root().querySelector('.delete-avatar')).toBeNull();
+    expect(root().textContent).toContain('Фото удалено');
+    expect(api.apiV1UsersIdGet$Json).toHaveBeenCalledTimes(1);
+    expect(revokeUrl).toHaveBeenCalledWith('blob:profile-test');
+  });
+
+  it('previews a selected photo, restores the saved avatar on cancel, and refreshes after saving', () => {
+    resolve(); avatar.next(new Blob(['old'])); avatar.complete(); harness.detectChanges();
+    createUrl.mockReturnValue('blob:chosen-photo');
+    const file = new File(['image'], 'avatar.png', {type: 'image/png'});
+    const select = () => {
+      const input = root().querySelector<HTMLInputElement>('input[type="file"]')!;
+      Object.defineProperty(input, 'files', {configurable: true, value: [file]});
+      input.dispatchEvent(new Event('change')); harness.detectChanges();
+    };
+    select(); expect(root().querySelector('img')?.getAttribute('src')).toBe('blob:chosen-photo');
+    root().querySelector<HTMLButtonElement>('.cancel-avatar')!.click(); harness.detectChanges();
+    expect(root().querySelector('img')?.getAttribute('src')).toBe('blob:profile-test');
+    select(); const upload = new Subject<void>(); avatars.uploadAvatar.mockReturnValue(upload);
+    root().querySelector<HTMLButtonElement>('.save-avatar')!.click(); harness.detectChanges();
+    component.reload(); expect(api.apiV1UsersIdGet$Json).toHaveBeenCalledTimes(1);
+    const nextAvatar = new Subject<Blob>(); avatars.getAvatar.mockReturnValue(nextAvatar);
+    avatars.revision.update(value => value + 1); upload.next(); upload.complete();
+    harness.detectChanges(); TestBed.tick(); createUrl.mockReturnValue('blob:stored-photo');
+    nextAvatar.next(new Blob(['new'])); nextAvatar.complete(); harness.detectChanges();
+    expect(root().querySelector('img')?.getAttribute('src')).toBe('blob:stored-photo');
+    expect(root().textContent).toContain('Фото профиля обновлено');
   });
 
   it('retries loading errors and refreshes profile data', () => {

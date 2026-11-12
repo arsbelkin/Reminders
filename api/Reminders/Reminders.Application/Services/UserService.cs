@@ -43,7 +43,31 @@ public class UserService : IUserService
         if (user.AvatarFileName == null)
             return null;
         
-        return await _fileManager.ReadAsync(user.AvatarFileName);
+        try
+        {
+            return await _fileManager.ReadAsync(user.AvatarFileName);
+        }
+        catch (FileNotFoundException)
+        {
+            return null;
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return null;
+        }
+    }
+
+    public async Task DeleteAvatarAsync(Guid userId)
+    {
+        var user = await _userRepository.GetUserByIdAsync(userId);
+        if (user == null)
+            throw new NotValidUserException();
+        if (user.AvatarFileName == null)
+            return;
+
+        await _fileManager.DeleteAsync(user.AvatarFileName);
+        user.AvatarFileName = null;
+        await _userRepository.UpdateUserAsync(user);
     }
 
     public async Task<UserInfoDTO> GetUserInfoAsync(Guid userId)

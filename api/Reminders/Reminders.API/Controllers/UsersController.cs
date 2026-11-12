@@ -71,6 +71,16 @@ public class UsersController : Controller
         return File(avatar.File, contentType);
     }
 
+    [HttpDelete("avatar")]
+    public async Task<IActionResult> DeleteAvatar()
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return Unauthorized();
+
+        await _userService.DeleteAvatarAsync(userId);
+        return NoContent();
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<UserInfoDTO>> GetInfoAsync(Guid id)
     {

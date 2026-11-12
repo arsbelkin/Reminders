@@ -6,4 +6,5 @@ public interface IFileManager
 {
     public Task SaveAsync(string fileName, byte[] data);
     public Task<UserFileDTO> ReadAsync(string fileName);
+    public Task DeleteAsync(string fileName);
 }
