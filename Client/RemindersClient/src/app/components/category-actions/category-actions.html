@@ -91,6 +91,7 @@
             formControlName="description"
             rows="4"
           ></textarea>
+          <app-members-editor formControlName="usersEmails" inputId="category-edit-members" [protectedEmail]="category()?.creatorEmail ?? null" [disabled]="busy()" />
         </fieldset>
       } @else {
         <p class="record-name">{{ target()?.title }}</p>

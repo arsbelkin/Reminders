@@ -10,4 +10,6 @@ public interface IUserService
     public Task<UserInfoDTO> GetUserInfoAsync(Guid userId);
     
     public Task<UserListResponseDTO> GetUsersAsync(UserGetRequestDTO dto);
+
+    public Task<UserInfoDTO> UpdateProfileAsync(Guid userId, UserUpdateDTO dto);
 }

@@ -59,7 +59,9 @@ button:focus-visible { outline: 3px solid #93b4ff; outline-offset: 3px; }
 .login-button svg { width: 18px; height: 18px; }
 .login-divider { display: flex; align-items: center; gap: 13px; margin: 25px 0 20px; color: #94a3b8; font-size: 12px; }
 .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: #e8edf4; }
-.register-button { display: flex; justify-content: center; align-items: center; gap: 10px; width: 100%; min-height: 46px; border: 1px solid #e2e8f0; border-radius: 9px; color: #64748b; background: #f8fafc; font-size: 13px; font-weight: 600; cursor: not-allowed; }
+.register-button { display: flex; justify-content: center; align-items: center; gap: 10px; width: 100%; min-height: 46px; border: 1px solid #e2e8f0; border-radius: 9px; color: #64748b; background: #f8fafc; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; }
+.register-button:hover { color: #2563eb; border-color: #bfdbfe; background: #eff6ff; }
+.register-button:focus-visible { outline: 3px solid #93b4ff; outline-offset: 3px; }
 .register-button span { padding: 3px 6px; border-radius: 4px; color: #64748b; background: #e9eef5; font-size: 10px; font-weight: 400; }
 .registration-note { margin: 12px 0 0; color: #94a3b8; font-size: 11px; text-align: center; }
 

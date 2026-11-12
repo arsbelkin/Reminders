@@ -15,20 +15,21 @@ public class CategoriesController : Controller
 {
     private readonly ICategoryService _categoryService;
     private readonly IMapper _mapper;
+    private readonly IUserService _userService;
 
-    public CategoriesController(ICategoryService categoryService, IMapper mapper)
+    public CategoriesController(ICategoryService categoryService, IMapper mapper, IUserService userService)
     {
         _categoryService = categoryService;
         _mapper = mapper;
+        _userService = userService;
     }
 
     [HttpPost]
     public async Task<ActionResult<IdResponseDTO>> Create([FromBody] CategoryRequestDTO dto)
     {
-        var userEmail = User.FindFirstValue(ClaimTypes.Email);
-        
         var createDto = _mapper.Map<CategoryCreateDTO>(dto);
         createDto.CreatorId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        var userEmail = (await _userService.GetUserInfoAsync(createDto.CreatorId)).Email;
         
         if (!createDto.UsersEmails.Contains(userEmail))
             createDto.UsersEmails.Add(userEmail);
@@ -64,10 +65,9 @@ public class CategoriesController : Controller
     [HttpPatch("{categoryId:guid}")]
     public async Task<ActionResult> UpdateCategory(Guid categoryId, [FromBody] CategoryRequestDTO dto)
     {
-        var userEmail = User.FindFirstValue(ClaimTypes.Email);
-        
         var updateDto = _mapper.Map<CategoryUpdateDTO>(dto);
         updateDto.UserId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        var userEmail = (await _userService.GetUserInfoAsync(updateDto.UserId)).Email;
         updateDto.Id = categoryId;
         
         if (!updateDto.UsersEmails.Contains(userEmail))

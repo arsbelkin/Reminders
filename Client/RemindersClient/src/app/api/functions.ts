@@ -71,3 +71,11 @@ export type { ApiV1UsersAvatarGet$Params as ApiV1UsersAvatarGet$Params } from '.
 export { apiV1UsersAvatarGet as apiV1UsersAvatarGet } from './fn/users/api-v-1-users-avatar-get';
 export type { ApiV1UsersAvatarPut$Params as ApiV1UsersAvatarPut$Params } from './fn/users/api-v-1-users-avatar-put';
 export { apiV1UsersAvatarPut as apiV1UsersAvatarPut } from './fn/users/api-v-1-users-avatar-put';
+export type { ApiV1UsersIdGet$Plain$Params as ApiV1UsersIdGet$Plain$Params } from './fn/users/api-v-1-users-id-get-plain';
+export { apiV1UsersIdGet$Plain as apiV1UsersIdGet$Plain } from './fn/users/api-v-1-users-id-get-plain';
+export type { ApiV1UsersIdGet$Json$Params as ApiV1UsersIdGet$Json$Params } from './fn/users/api-v-1-users-id-get-json';
+export { apiV1UsersIdGet$Json as apiV1UsersIdGet$Json } from './fn/users/api-v-1-users-id-get-json';
+export type { ApiV1UsersGet$Plain$Params as ApiV1UsersGet$Plain$Params } from './fn/users/api-v-1-users-get-plain';
+export { apiV1UsersGet$Plain as apiV1UsersGet$Plain } from './fn/users/api-v-1-users-get-plain';
+export type { ApiV1UsersGet$Json$Params as ApiV1UsersGet$Json$Params } from './fn/users/api-v-1-users-get-json';
+export { apiV1UsersGet$Json as apiV1UsersGet$Json } from './fn/users/api-v-1-users-get-json';

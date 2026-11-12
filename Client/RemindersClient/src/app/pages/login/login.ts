@@ -1,13 +1,14 @@
-import { Component, ElementRef, output, signal, viewChild, inject } from '@angular/core';
+import { Component, DestroyRef, ElementRef, output, signal, viewChild, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { UserLoginDto } from '../../api/models/user-login-dto';
 import { AuthService } from '../../api/services';
 import { TokenStorageService } from '../../auth/token-storage.service';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   selector: 'app-login',
   styleUrl: './login.css',
   templateUrl: './login.html',
@@ -19,6 +20,7 @@ export class Login {
   readonly isSubmitting = signal(false);
 
   private readonly authApi = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly tokenStorage = inject(TokenStorageService);
   private readonly router = inject(Router);
 
@@ -83,7 +85,7 @@ export class Login {
           password: values.password,
         },
       })
-      .pipe(finalize(() => this.isSubmitting.set(false)))
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.isSubmitting.set(false)))
       .subscribe({
         next: (response) => {
           if (!response.token) {

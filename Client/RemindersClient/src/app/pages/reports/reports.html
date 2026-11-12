@@ -1,0 +1,21 @@
+<section class="notifications-page" aria-labelledby="reports-title">
+  <div class="page-heading"><div><h1 id="reports-title">Отчёты</h1><p>Отчёты для администратора</p></div></div>
+  @let current = state();
+  @if (current.kind === 'loading') {
+    <div class="page-state" role="status"><span class="loading-spinner" aria-hidden="true"></span><p>Загружаем отчёты…</p></div>
+  } @else if (current.kind === 'error') {
+    <div class="page-state" role="alert"><h2>Не удалось загрузить отчёты</h2><p>Проверьте соединение и попробуйте ещё раз.</p>
+      <button class="refresh-button" type="button" (click)="reload()">Повторить загрузку</button>
+    </div>
+  } @else if (current.kind === 'forbidden') {
+    <div class="page-state" role="alert"><h2>Нет доступа к отчётам</h2><p>Отчёты доступны только администратору.</p></div>
+  } @else if (current.kind === 'ready') {
+  <ul class="reports-list">
+    <li><a class="report-card" routerLink="/reports/1">
+      <span class="report-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 16v-3M12 16V8M16 16v-5"/></svg></span>
+      <span><h2>{{ current.title }}</h2>@if (current.description) { <p>{{ current.description }}</p> }</span>
+      <span class="report-arrow" aria-hidden="true">→</span>
+    </a></li>
+  </ul>
+  }
+</section>

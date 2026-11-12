@@ -14,6 +14,16 @@ import { apiV1UsersAvatarGet } from '../fn/users/api-v-1-users-avatar-get';
 import { ApiV1UsersAvatarGet$Params } from '../fn/users/api-v-1-users-avatar-get';
 import { apiV1UsersAvatarPut } from '../fn/users/api-v-1-users-avatar-put';
 import { ApiV1UsersAvatarPut$Params } from '../fn/users/api-v-1-users-avatar-put';
+import { apiV1UsersGet$Json } from '../fn/users/api-v-1-users-get-json';
+import { ApiV1UsersGet$Json$Params } from '../fn/users/api-v-1-users-get-json';
+import { apiV1UsersGet$Plain } from '../fn/users/api-v-1-users-get-plain';
+import { ApiV1UsersGet$Plain$Params } from '../fn/users/api-v-1-users-get-plain';
+import { apiV1UsersIdGet$Json } from '../fn/users/api-v-1-users-id-get-json';
+import { ApiV1UsersIdGet$Json$Params } from '../fn/users/api-v-1-users-id-get-json';
+import { apiV1UsersIdGet$Plain } from '../fn/users/api-v-1-users-id-get-plain';
+import { ApiV1UsersIdGet$Plain$Params } from '../fn/users/api-v-1-users-id-get-plain';
+import { UserInfoDto } from '../models/user-info-dto';
+import { UserListResponseDto } from '../models/user-list-response-dto';
 
 @Injectable({ providedIn: 'root' })
 export class UsersService extends BaseService {
@@ -72,6 +82,108 @@ export class UsersService extends BaseService {
     const resp = this.apiV1UsersAvatarPut$Response(params, context);
     return resp.pipe(
       map((r: StrictHttpResponse<void>): void => r.body)
+    );
+  }
+
+  /** Path part for operation `apiV1UsersIdGet()` */
+  static readonly ApiV1UsersIdGetPath = '/api/v1/Users/{id}';
+
+  /**
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `apiV1UsersIdGet$Plain()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  apiV1UsersIdGet$Plain$Response(params: ApiV1UsersIdGet$Plain$Params, context?: HttpContext): Observable<StrictHttpResponse<UserInfoDto>> {
+    const obs = apiV1UsersIdGet$Plain(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `apiV1UsersIdGet$Plain$Response()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  apiV1UsersIdGet$Plain(params: ApiV1UsersIdGet$Plain$Params, context?: HttpContext): Observable<UserInfoDto> {
+    const resp = this.apiV1UsersIdGet$Plain$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<UserInfoDto>): UserInfoDto => r.body)
+    );
+  }
+
+  /**
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `apiV1UsersIdGet$Json()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  apiV1UsersIdGet$Json$Response(params: ApiV1UsersIdGet$Json$Params, context?: HttpContext): Observable<StrictHttpResponse<UserInfoDto>> {
+    const obs = apiV1UsersIdGet$Json(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `apiV1UsersIdGet$Json$Response()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  apiV1UsersIdGet$Json(params: ApiV1UsersIdGet$Json$Params, context?: HttpContext): Observable<UserInfoDto> {
+    const resp = this.apiV1UsersIdGet$Json$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<UserInfoDto>): UserInfoDto => r.body)
+    );
+  }
+
+  /** Path part for operation `apiV1UsersGet()` */
+  static readonly ApiV1UsersGetPath = '/api/v1/Users';
+
+  /**
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `apiV1UsersGet$Plain()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  apiV1UsersGet$Plain$Response(params?: ApiV1UsersGet$Plain$Params, context?: HttpContext): Observable<StrictHttpResponse<UserListResponseDto>> {
+    const obs = apiV1UsersGet$Plain(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `apiV1UsersGet$Plain$Response()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  apiV1UsersGet$Plain(params?: ApiV1UsersGet$Plain$Params, context?: HttpContext): Observable<UserListResponseDto> {
+    const resp = this.apiV1UsersGet$Plain$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<UserListResponseDto>): UserListResponseDto => r.body)
+    );
+  }
+
+  /**
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `apiV1UsersGet$Json()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  apiV1UsersGet$Json$Response(params?: ApiV1UsersGet$Json$Params, context?: HttpContext): Observable<StrictHttpResponse<UserListResponseDto>> {
+    const obs = apiV1UsersGet$Json(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `apiV1UsersGet$Json$Response()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  apiV1UsersGet$Json(params?: ApiV1UsersGet$Json$Params, context?: HttpContext): Observable<UserListResponseDto> {
+    const resp = this.apiV1UsersGet$Json$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<UserListResponseDto>): UserListResponseDto => r.body)
     );
   }
 

@@ -2,10 +2,11 @@ import { Component, ElementRef, inject, output, signal, viewChild } from '@angul
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { CategoriesService } from '../../api/services';
+import { MembersEditor } from '../members-editor/members-editor';
 
 @Component({
   selector: 'app-category-create',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, MembersEditor],
   templateUrl: './category-create.html',
   styleUrl: './category-create.css',
 })
@@ -20,6 +21,7 @@ export class CategoryCreate {
   readonly errorMessage = signal<string | null>(null);
 
   readonly form = new FormGroup({
+    usersEmails: new FormControl<string[]>([], {nonNullable: true}),
     title: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(/\S/)],
@@ -64,7 +66,7 @@ export class CategoryCreate {
       return;
     }
 
-    const { title, description } = this.form.getRawValue();
+    const { title, description, usersEmails } = this.form.getRawValue();
 
     this.isSaving.set(true);
     this.errorMessage.set(null);
@@ -74,7 +76,7 @@ export class CategoryCreate {
         body: {
           title: title.trim(),
           description: description.trim() || null,
-          usersEmails: [],
+          usersEmails,
         },
       })
       .pipe(finalize(() => this.isSaving.set(false)))
@@ -83,8 +85,10 @@ export class CategoryCreate {
           this.dialog().nativeElement.close();
           this.created.emit();
         },
-        error: () => {
-          this.errorMessage.set('Не удалось создать категорию. Попробуйте ещё раз.');
+        error: (error: {status?: number}) => {
+          this.errorMessage.set(error.status === 422
+            ? 'Проверьте email участников: все пользователи должны быть зарегистрированы.'
+            : 'Не удалось создать категорию. Попробуйте ещё раз.');
         },
       });
   }

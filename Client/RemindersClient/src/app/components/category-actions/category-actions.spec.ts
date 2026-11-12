@@ -4,6 +4,7 @@ import { Subject } from 'rxjs';
 import { CategoriesService } from '../../api/services';
 import { TokenStorageService } from '../../auth/token-storage.service';
 import { CategoryActions } from './category-actions';
+import { UserSearchService } from '../../shared/user-search.service';
 
 describe('CategoryActions', () => {
   let fixture: ComponentFixture<CategoryActions>;
@@ -22,6 +23,7 @@ describe('CategoryActions', () => {
     api.apiV1CategoriesCategoryIdDelete.mockReset().mockReturnValue(request.asObservable());
     TestBed.configureTestingModule({providers: [
       {provide: CategoriesService, useValue: api},
+      {provide: UserSearchService, useValue: {find: vi.fn()}},
       {provide: TokenStorageService, useValue: {userId}},
     ]});
     fixture = TestBed.createComponent(CategoryActions);
@@ -35,13 +37,13 @@ describe('CategoryActions', () => {
 
   it('prefills editing, validates whitespace and preserves members in the request', () => {
     root().querySelector<HTMLButtonElement>('.edit-category')!.click();
-    expect(component.form.getRawValue()).toEqual({title: category.title, description: category.description});
+    expect(component.form.getRawValue()).toEqual({title: category.title, description: category.description, usersEmails: category.usersEmails});
     component.form.controls.title.setValue('   ');
     component.submit();
     fixture.detectChanges();
     expect(root().querySelector('.field-error')).not.toBeNull();
     expect(api.apiV1CategoriesCategoryIdPatch).not.toHaveBeenCalled();
-    component.form.setValue({title: '  Планы  ', description: '  Новое описание  '});
+    component.form.patchValue({title: '  Планы  ', description: '  Новое описание  '});
     component.submit();
     component.submit();
     expect(api.apiV1CategoriesCategoryIdPatch).toHaveBeenCalledExactlyOnceWith({categoryId: 'work', body: {
@@ -67,6 +69,17 @@ describe('CategoryActions', () => {
     expect(api.apiV1CategoriesCategoryIdPatch).toHaveBeenCalledWith({categoryId: 'work', body: {
       title: category.title, description: null, usersEmails: category.usersEmails,
     }});
+  });
+
+  it('sends edited participants and restores the original list when cancelling', () => {
+    component.open('edit');
+    component.form.controls.usersEmails.setValue(['owner@example.test', 'new@example.test']);
+    component.close(); component.open('edit');
+    expect(component.form.controls.usersEmails.value).toEqual(category.usersEmails);
+    component.form.controls.usersEmails.setValue(['owner@example.test', 'new@example.test']);
+    component.submit();
+    expect(api.apiV1CategoriesCategoryIdPatch.mock.calls[0][0].body.usersEmails).toEqual(['owner@example.test', 'new@example.test']);
+    expect(category.usersEmails).toEqual(['owner@example.test', 'member@example.test']);
   });
 
   it('confirms cascading deletion, blocks duplicates and closing while pending', () => {

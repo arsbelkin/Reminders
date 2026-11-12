@@ -16,10 +16,11 @@ import { finalize } from 'rxjs';
 import { CategoriesService } from '../../api/services';
 import { CategoryInfoViewDto } from '../../api/models/category-info-view-dto';
 import { TokenStorageService } from '../../auth/token-storage.service';
+import { MembersEditor } from '../members-editor/members-editor';
 
 @Component({
   selector: 'app-category-actions',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, MembersEditor],
   templateUrl: './category-actions.html',
   styleUrl: './category-actions.css',
 })
@@ -38,7 +39,6 @@ export class CategoryActions {
   readonly target = signal<{
     id: string;
     title: string;
-    usersEmails: string[];
     ownerId: string;
   } | null>(null);
   readonly canManage = computed(() => {
@@ -46,6 +46,7 @@ export class CategoryActions {
     return !!userId && this.category()?.creatorId?.trim().toLowerCase() === userId;
   });
   readonly form = new FormGroup({
+    usersEmails: new FormControl<string[]>([], {nonNullable: true}),
     title: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(/\S/)],
@@ -77,10 +78,9 @@ export class CategoryActions {
     this.target.set({
       id: this.categoryId(),
       title: category.title || 'Без названия',
-      usersEmails: [...(category.usersEmails ?? [])],
       ownerId,
     });
-    this.form.reset({ title: category.title ?? '', description: category.description ?? '' });
+    this.form.reset({ title: category.title ?? '', description: category.description ?? '', usersEmails: [...(category.usersEmails ?? [])] });
     this.error.set(null);
     this.dialog().nativeElement.showModal();
   }
@@ -113,7 +113,7 @@ export class CategoryActions {
     const deleting = this.mode() === 'delete';
     this.form.markAllAsTouched();
     if (!deleting && this.form.invalid) return;
-    const { title, description } = this.form.getRawValue();
+    const { title, description, usersEmails } = this.form.getRawValue();
     this.busy.set(true);
     this.error.set(null);
     const request = deleting
@@ -123,7 +123,7 @@ export class CategoryActions {
           body: {
             title: title.trim(),
             description: description.trim() || null,
-            usersEmails: target.usersEmails,
+            usersEmails,
           },
         });
     request
@@ -147,7 +147,9 @@ export class CategoryActions {
           this.error.set(
             error.status === 403 || error.status === 404
               ? 'Категория удалена или у вас нет прав на её изменение.'
-              : `Не удалось ${action} категорию. Попробуйте ещё раз.`,
+              : error.status === 422
+                ? 'Проверьте email участников: все пользователи должны быть зарегистрированы.'
+                : `Не удалось ${action} категорию. Попробуйте ещё раз.`,
           );
         },
       });

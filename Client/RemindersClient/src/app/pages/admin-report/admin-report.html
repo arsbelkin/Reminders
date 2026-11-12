@@ -1,0 +1,43 @@
+<section class="notifications-page" aria-labelledby="report-title">
+  <a class="report-back" routerLink="/reports">← Все отчёты</a>
+  @let current = state();
+  <div class="page-heading">
+    <div><h1 id="report-title">{{ current.kind === 'ready' ? current.title : 'Отчёт' }}</h1>
+      @if (current.kind === 'ready' && current.description) { <p>{{ current.description }}</p> }
+    </div>
+    <div class="page-actions">
+      @if (current.kind === 'ready') { <span class="notifications-count">Пользователей: {{ current.rows.length }}</span> }
+      @if (current.kind !== 'forbidden' && current.kind !== 'missing') {
+        <button class="refresh-button" type="button" [disabled]="current.kind === 'loading'" (click)="reload()">Обновить</button>
+      }
+    </div>
+  </div>
+  @if (current.kind === 'loading') {
+    <div class="page-state" role="status"><span class="loading-spinner" aria-hidden="true"></span><p>Загружаем отчёт…</p></div>
+  } @else if (current.kind === 'forbidden') {
+    <div class="page-state" role="alert"><h2>Нет доступа к отчёту</h2><p>Отчёты доступны только администратору.</p></div>
+  } @else if (current.kind === 'missing') {
+    <div class="page-state"><h2>Отчёт не найден</h2><p>Вернитесь к списку и выберите доступный отчёт.</p></div>
+  } @else if (current.kind === 'error') {
+    <div class="page-state" role="alert"><h2>Не удалось загрузить отчёт</h2><p>Проверьте соединение и попробуйте ещё раз.</p>
+      <button class="refresh-button" type="button" (click)="reload()">Повторить загрузку</button>
+    </div>
+  } @else if (current.kind === 'ready') {
+    @if (current.rows.length === 0) {
+      <div class="page-state"><h2>Данных пока нет</h2><p>Здесь появится статистика пользователей.</p></div>
+    } @else {
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Данные отчёта">
+        <table class="report-table"><caption class="visually-hidden">{{ current.title }} — статистика пользователей</caption>
+          <thead><tr><th scope="col">Пользователь</th><th scope="col">Email</th><th scope="col">Всего напоминаний</th><th scope="col">Завершено</th><th scope="col">Активных</th></tr></thead>
+          <tbody>
+            @for (row of current.rows; track $index) {
+              <tr><td class="notification-title">{{ row.userName?.trim() || 'Без имени' }}</td><td>{{ row.email?.trim() || 'Не указан' }}</td>
+                <td>{{ count(row.numberOfReminders) ?? '—' }}</td><td>{{ count(row.numberOfCompletedReminders) ?? '—' }}</td><td>{{ activeCount(row) ?? '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</section>

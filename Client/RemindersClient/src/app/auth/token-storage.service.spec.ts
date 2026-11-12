@@ -39,4 +39,15 @@ describe('TokenStorageService identity', () => {
     window.dispatchEvent(new StorageEvent('storage', {key, storageArea: localStorage}));
     expect(storage.userId()).toBeNull();
   });
+
+  it.each([
+    [{role: 'Admin'}, true], [{role: ['User', 'Admin']}, true],
+    [{'http://schemas.microsoft.com/ws/2008/06/identity/claims/role': 'Admin'}, true],
+    [{role: 'User'}, false], [{role: 'SuperAdmin'}, false], [{role: ['User']}, false],
+    [{role: {Admin: true}}, false], [null, false],
+  ])('reads administrator role from %j', (claims, expected) => {
+    const storage = TestBed.inject(TokenStorageService);
+    storage.saveToken(token(claims)); expect(storage.isAdmin()).toBe(expected);
+    storage.clearToken(); expect(storage.isAdmin()).toBe(false);
+  });
 });

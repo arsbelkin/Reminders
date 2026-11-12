@@ -4,6 +4,7 @@ import { LoginResponseDto } from '../../api/models/login-response-dto';
 import { AuthService } from '../../api/services';
 import { TokenStorageService } from '../../auth/token-storage.service';
 import { Login } from './login';
+import { Router, provideRouter } from '@angular/router';
 
 describe('Login', () => {
   let component: Login;
@@ -21,18 +22,33 @@ describe('Login', () => {
     await TestBed.configureTestingModule({
       imports: [Login],
       providers: [
+        provideRouter([]),
         { provide: AuthService, useValue: authApi },
         { provide: TokenStorageService, useValue: tokenStorage },
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Login);
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('links to the registration page', () => {
+    expect(fixture.nativeElement.querySelector('.register-button')?.getAttribute('href')).toBe('/register');
+    expect(fixture.nativeElement.textContent).not.toContain('Регистрация скоро появится');
+  });
+
+  it('cancels pending login when leaving for registration', () => {
+    component.form.setValue({inputString: 'user', password: 'password'});
+    component.submit(); expect(loginResponse.observed).toBe(true);
+    fixture.destroy(); expect(loginResponse.observed).toBe(false);
+    loginResponse.next({token: 'late-token'});
+    expect(tokenStorage.saveToken).not.toHaveBeenCalled();
   });
 
   it('toggles password visibility without changing or submitting it', () => {

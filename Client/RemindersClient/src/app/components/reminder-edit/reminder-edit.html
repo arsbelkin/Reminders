@@ -94,6 +94,7 @@
             }
           </div>
         </div>
+        <app-members-editor formControlName="usersEmails" inputId="reminder-edit-members" [categoryId]="form.controls.categoryId.value" [disabled]="isSaving()" />
       </fieldset>
       @if (errorMessage()) {
         <div class="form-error" role="alert">

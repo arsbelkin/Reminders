@@ -1,0 +1,68 @@
+@if (errorMessage(); as message) {
+  <div class="error-toast" role="alert" aria-atomic="true">
+    <svg class="error-toast__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 17h.01"/></svg>
+    <div class="error-toast__content"><p class="error-toast__title">Не удалось зарегистрироваться</p><p>{{ message }}</p></div>
+    <button class="error-toast__close" type="button" aria-label="Закрыть уведомление" (click)="errorMessage.set(null)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+    </button>
+  </div>
+}
+<section class="login-card" aria-labelledby="register-title">
+  <div class="login-mark" [class.success-mark]="registered()" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      @if (registered()) { <path d="m5 12 4 4L19 6"/> }
+      @else { <rect x="5" y="3" width="15" height="18" rx="2"/><path d="M9 3v18M3 7h4M3 12h4M3 17h4M12 8h5M12 12h5M12 16h3"/> }
+    </svg>
+  </div>
+  @if (registered()) {
+    <div role="status"><h1 id="register-title" tabindex="-1">Аккаунт создан!</h1><p class="success-copy">Теперь можно войти и добавить своё первое напоминание.</p></div>
+    <a class="login-button auth-link" routerLink="/login">Перейти ко входу</a>
+  } @else {
+    <h1 id="register-title">Создать аккаунт</h1>
+    <form #registerForm class="login-form" [formGroup]="form" (ngSubmit)="submit()" novalidate [attr.aria-busy]="isSubmitting()">
+      <fieldset [disabled]="isSubmitting()">
+        <legend class="visually-hidden">Данные регистрации</legend>
+        <div class="form-field">
+          <label for="register-username">Логин</label>
+          <input id="register-username" formControlName="username" type="text" autocomplete="username" placeholder="Придумайте логин" autocapitalize="none" spellcheck="false" aria-required="true"
+            [class.is-invalid]="form.controls.username.touched && form.controls.username.invalid" [attr.aria-invalid]="form.controls.username.touched && form.controls.username.invalid"
+            [attr.aria-describedby]="form.controls.username.touched && form.controls.username.invalid ? 'register-username-error' : null" />
+          @if (form.controls.username.touched && form.controls.username.invalid) { <p class="field-error" id="register-username-error">Введите логин.</p> }
+        </div>
+        <div class="form-field">
+          <label for="register-email">Email</label>
+          <input id="register-email" formControlName="email" type="email" autocomplete="email" placeholder="you@example.com" autocapitalize="none" spellcheck="false" aria-required="true"
+            [class.is-invalid]="form.controls.email.touched && form.controls.email.invalid" [attr.aria-invalid]="form.controls.email.touched && form.controls.email.invalid"
+            [attr.aria-describedby]="form.controls.email.touched && form.controls.email.invalid ? 'register-email-error' : null" />
+          @if (form.controls.email.touched && form.controls.email.invalid) { <p class="field-error" id="register-email-error">Введите корректный email.</p> }
+        </div>
+        <div class="form-field">
+          <label for="register-password">Пароль</label>
+          <div class="password-field" [class.is-invalid]="form.controls.password.touched && form.controls.password.invalid">
+            <input id="register-password" formControlName="password" [type]="passwordVisible() ? 'text' : 'password'" autocomplete="new-password" placeholder="Придумайте пароль" aria-required="true"
+              [attr.aria-invalid]="form.controls.password.touched && form.controls.password.invalid" [attr.aria-describedby]="form.controls.password.touched && form.controls.password.invalid ? 'register-password-error' : null" />
+            <button class="password-toggle" type="button" (click)="passwordVisible.set(!passwordVisible())" [attr.aria-label]="passwordVisible() ? 'Скрыть пароль' : 'Показать пароль'" [attr.aria-pressed]="passwordVisible()" aria-controls="register-password">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>@if (passwordVisible()) { <path d="m3 3 18 18"/> }</svg>
+            </button>
+          </div>
+          @if (form.controls.password.touched && form.controls.password.invalid) { <p class="field-error" id="register-password-error">Введите пароль.</p> }
+        </div>
+        <div class="form-field">
+          <label for="register-password-verify">Повторите пароль</label>
+          <div class="password-field" [class.is-invalid]="form.controls.passwordVerify.touched && (form.controls.passwordVerify.invalid || form.hasError('passwordMismatch'))">
+            <input id="register-password-verify" formControlName="passwordVerify" [type]="confirmationVisible() ? 'text' : 'password'" autocomplete="new-password" placeholder="Введите пароль ещё раз" aria-required="true"
+              [attr.aria-invalid]="form.controls.passwordVerify.touched && (form.controls.passwordVerify.invalid || form.hasError('passwordMismatch'))"
+              [attr.aria-describedby]="form.controls.passwordVerify.touched && (form.controls.passwordVerify.invalid || form.hasError('passwordMismatch')) ? 'register-verify-error' : null" />
+            <button class="password-toggle" type="button" (click)="confirmationVisible.set(!confirmationVisible())" [attr.aria-label]="confirmationVisible() ? 'Скрыть подтверждение пароля' : 'Показать подтверждение пароля'" [attr.aria-pressed]="confirmationVisible()" aria-controls="register-password-verify">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>@if (confirmationVisible()) { <path d="m3 3 18 18"/> }</svg>
+            </button>
+          </div>
+          @if (form.controls.passwordVerify.touched && (form.controls.passwordVerify.invalid || form.hasError('passwordMismatch'))) { <p class="field-error" id="register-verify-error">{{ form.controls.passwordVerify.invalid ? 'Повторите пароль.' : 'Пароли не совпадают.' }}</p> }
+        </div>
+      </fieldset>
+      <button class="login-button" type="submit" [disabled]="isSubmitting()" [attr.aria-busy]="isSubmitting()">{{ isSubmitting() ? 'Создаём аккаунт…' : 'Зарегистрироваться' }}</button>
+    </form>
+    <div class="login-divider"><span>Уже есть аккаунт?</span></div>
+    <a class="register-button auth-link" routerLink="/login">Войти</a>
+  }
+</section>

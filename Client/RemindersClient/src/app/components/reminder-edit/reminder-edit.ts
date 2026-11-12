@@ -7,10 +7,11 @@ import { ReminderInfoViewDto } from '../../api/models/reminder-info-view-dto';
 import { CategoryListViewDto } from '../../api/models/category-list-view-dto';
 import { TokenStorageService } from '../../auth/token-storage.service';
 import { PRIORITY_LABELS } from '../../shared/reminder-labels';
+import { MembersEditor } from '../members-editor/members-editor';
 
 @Component({
   selector: 'app-reminder-edit',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, MembersEditor],
   templateUrl: './reminder-edit.html',
   styleUrls: ['../reminder-create/reminder-create.css', '../reminder-create/reminder-create-fields.css'],
 })
@@ -36,6 +37,7 @@ export class ReminderEdit {
   });
   readonly priorityOptions = Object.entries(PRIORITY_LABELS).map(([value, label]) => ({value: Number(value), label}));
   readonly form = new FormGroup({
+    usersEmails: new FormControl<string[]>([], {nonNullable: true}),
     title: new FormControl('', {nonNullable: true, validators: [Validators.required, Validators.pattern(/\S/)]}),
     categoryId: new FormControl('', {nonNullable: true, validators: [Validators.required]}),
     description: new FormControl('', {nonNullable: true}),
@@ -60,7 +62,7 @@ export class ReminderEdit {
     if (!reminder || !ownerId || !this.canEdit() || this.isSaving() || this.disabled()) return;
     const localDate = this.toLocalDate(reminder.dueDate);
     this.target.set({id: this.reminderId(), ownerId, reminder: {...reminder, memberEmails: [...reminder.memberEmails ?? []]}, localDate});
-    this.form.reset({title: reminder.title ?? '', categoryId: reminder.categoryId ?? '', description: reminder.description ?? '', priority: reminder.priority ?? 0, dueDate: localDate});
+    this.form.reset({title: reminder.title ?? '', categoryId: reminder.categoryId ?? '', description: reminder.description ?? '', priority: reminder.priority ?? 0, dueDate: localDate, usersEmails: [...(reminder.memberEmails ?? [])]});
     this.categories.set([]);
     this.errorMessage.set(null);
     this.dialog().nativeElement.showModal();
@@ -115,7 +117,7 @@ export class ReminderEdit {
       title: values.title.trim(), description: values.description.trim() || null,
       categoryId: values.categoryId, priority: values.priority,
       dueDate: values.dueDate === target.localDate ? target.reminder.dueDate ?? null : date?.toISOString() ?? null,
-      usersEmails: target.reminder.memberEmails,
+      usersEmails: values.usersEmails,
     }}).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.isSaving.set(false))).subscribe({
       next: () => {
         if (target.ownerId !== this.session.userId()) return;
@@ -127,10 +129,11 @@ export class ReminderEdit {
       },
       error: (error: {status?: number}) => {
         if (this.target() !== target) return;
-        this.errorMessage.set(error.status === 403 || error.status === 404
+        this.errorMessage.set(error.status === 403
           ? 'Напоминание удалено или у вас нет прав на его изменение.'
-          : error.status === 400
-            ? 'Проверьте данные. Все участники напоминания должны входить в выбранную категорию.'
+          : error.status === 400 || error.status === 404
+            ? 'Проверьте данные и доступ к напоминанию. Все участники должны входить в выбранную категорию.'
+            : error.status === 422 ? 'Проверьте email участников.'
             : 'Не удалось сохранить напоминание. Попробуйте ещё раз.');
       },
     });

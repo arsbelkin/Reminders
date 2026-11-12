@@ -61,4 +61,23 @@ public class UserService : IUserService
         var res = await _userRepository.GetUsersAsync(dto);
         return res;
     }
+
+    public async Task<UserInfoDTO> UpdateProfileAsync(Guid userId, UserUpdateDTO dto)
+    {
+        var user = await _userRepository.GetUserByIdAsync(userId);
+        if (user == null)
+            throw new NotValidUserException();
+
+        var username = dto.Username.Trim();
+        var email = dto.Email.Trim();
+        if (user.Username != username && await _userRepository.CheckUserByUsernameAsync(username))
+            throw new ExistedUsernameException(username);
+        if (user.Email != email && await _userRepository.CheckUserByEmailAsync(email))
+            throw new ExistedEmailException(email);
+
+        user.Username = username;
+        user.Email = email;
+        await _userRepository.UpdateUserAsync(user);
+        return await GetUserInfoAsync(userId);
+    }
 }

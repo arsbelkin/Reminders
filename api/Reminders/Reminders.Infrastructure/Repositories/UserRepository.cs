@@ -1,5 +1,7 @@
 ﻿using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using Reminders.Application.Exceptions;
 using Reminders.Domain.Models;
 using Reminders.Infrastructure.Contexts;
 using Reminders.Application.Repositories.Interfaces;
@@ -64,7 +66,20 @@ public class UserRepository : IUserRepository
     public async Task UpdateUserAsync(User user)
     {
         _dbContext.Users.Update(user);
-        await _dbContext.SaveChangesAsync();
+        try
+        {
+            await _dbContext.SaveChangesAsync();
+        }
+        catch (DbUpdateException exception) when (exception.InnerException is PostgresException
+               { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: "IX_Users_Username" })
+        {
+            throw new ExistedUsernameException(user.Username);
+        }
+        catch (DbUpdateException exception) when (exception.InnerException is PostgresException
+               { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: "IX_Users_Email" })
+        {
+            throw new ExistedEmailException(user.Email);
+        }
     }
 
     public async Task<UserInfoDTO?> GetUserInfoAsync(Guid userId)

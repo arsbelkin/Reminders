@@ -59,6 +59,8 @@
   font-weight: 600;
 }
 .account-option {
+  box-sizing: border-box;
+  text-decoration: none;
   display: flex;
   align-items: center;
   gap: 11px;
@@ -94,12 +96,12 @@
   background: #f1f5f9;
 }
 
-.account-option:enabled {
+.account-option:enabled, a.account-option {
   color: #334155;
   cursor: pointer;
 }
 
-.account-option:enabled:hover {
+.account-option:enabled:hover, a.account-option:hover {
   background: #f1f6ff;
 }
 

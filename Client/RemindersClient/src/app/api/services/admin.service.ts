@@ -10,7 +10,7 @@ import { BaseService } from '../base-service';
 import { ApiConfiguration } from '../api-configuration';
 import { StrictHttpResponse } from '../strict-http-response';
 
-import { AdminReportModel } from '../models/admin-report-model';
+import { AdminResponseModel } from '../models/admin-response-model';
 import { apiV1AdminReportGet$Json } from '../fn/admin/api-v-1-admin-report-get-json';
 import { ApiV1AdminReportGet$Json$Params } from '../fn/admin/api-v-1-admin-report-get-json';
 import { apiV1AdminReportGet$Plain } from '../fn/admin/api-v-1-admin-report-get-plain';
@@ -31,7 +31,7 @@ export class AdminService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  apiV1AdminReportGet$Plain$Response(params?: ApiV1AdminReportGet$Plain$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<AdminReportModel>>> {
+  apiV1AdminReportGet$Plain$Response(params?: ApiV1AdminReportGet$Plain$Params, context?: HttpContext): Observable<StrictHttpResponse<AdminResponseModel>> {
     const obs = apiV1AdminReportGet$Plain(this.http, this.rootUrl, params, context);
     return obs;
   }
@@ -42,10 +42,10 @@ export class AdminService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  apiV1AdminReportGet$Plain(params?: ApiV1AdminReportGet$Plain$Params, context?: HttpContext): Observable<Array<AdminReportModel>> {
+  apiV1AdminReportGet$Plain(params?: ApiV1AdminReportGet$Plain$Params, context?: HttpContext): Observable<AdminResponseModel> {
     const resp = this.apiV1AdminReportGet$Plain$Response(params, context);
     return resp.pipe(
-      map((r: StrictHttpResponse<Array<AdminReportModel>>): Array<AdminReportModel> => r.body)
+      map((r: StrictHttpResponse<AdminResponseModel>): AdminResponseModel => r.body)
     );
   }
 
@@ -55,7 +55,7 @@ export class AdminService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  apiV1AdminReportGet$Json$Response(params?: ApiV1AdminReportGet$Json$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<AdminReportModel>>> {
+  apiV1AdminReportGet$Json$Response(params?: ApiV1AdminReportGet$Json$Params, context?: HttpContext): Observable<StrictHttpResponse<AdminResponseModel>> {
     const obs = apiV1AdminReportGet$Json(this.http, this.rootUrl, params, context);
     return obs;
   }
@@ -66,10 +66,10 @@ export class AdminService extends BaseService {
    *
    * This method doesn't expect any request body.
    */
-  apiV1AdminReportGet$Json(params?: ApiV1AdminReportGet$Json$Params, context?: HttpContext): Observable<Array<AdminReportModel>> {
+  apiV1AdminReportGet$Json(params?: ApiV1AdminReportGet$Json$Params, context?: HttpContext): Observable<AdminResponseModel> {
     const resp = this.apiV1AdminReportGet$Json$Response(params, context);
     return resp.pipe(
-      map((r: StrictHttpResponse<Array<AdminReportModel>>): Array<AdminReportModel> => r.body)
+      map((r: StrictHttpResponse<AdminResponseModel>): AdminResponseModel => r.body)
     );
   }
 

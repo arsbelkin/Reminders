@@ -78,6 +78,15 @@ public class UsersController : Controller
         return Ok(res);
     }
 
+    [HttpPut("me")]
+    public async Task<ActionResult<UserInfoDTO>> UpdateProfileAsync([FromBody] UserUpdateDTO dto)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            return Unauthorized();
+
+        return Ok(await _userService.UpdateProfileAsync(userId, dto));
+    }
+
     [HttpGet]
     public async Task<ActionResult<UserListResponseDTO>> GetUsersAsync([FromQuery] UserGetRequestDTO dto)
     {

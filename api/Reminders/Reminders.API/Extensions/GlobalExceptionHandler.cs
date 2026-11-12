@@ -52,6 +52,11 @@ public class GlobalExceptionHandler : IExceptionHandler
             Instance = httpContext.Request.Path
         };
 
+        if (exception is ExistedUsernameException)
+            problemDetails.Extensions["field"] = "username";
+        else if (exception is ExistedEmailException)
+            problemDetails.Extensions["field"] = "email";
+
         await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
         return true;
     }

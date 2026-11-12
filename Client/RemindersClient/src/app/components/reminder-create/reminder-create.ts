@@ -17,10 +17,11 @@ import { finalize } from 'rxjs';
 import { RemindersService } from '../../api/services';
 import { CategoryListViewDto } from '../../api/models/category-list-view-dto';
 import { PRIORITY_LABELS } from '../../shared/reminder-labels';
+import { MembersEditor } from '../members-editor/members-editor';
 
 @Component({
   selector: 'app-reminder-create',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, MembersEditor],
   templateUrl: './reminder-create.html',
   styleUrls: ['./reminder-create.css', './reminder-create-fields.css'],
 })
@@ -44,6 +45,7 @@ export class ReminderCreate {
   );
 
   readonly form = new FormGroup({
+    usersEmails: new FormControl<string[]>([], {nonNullable: true}),
     title: new FormControl('', {
       nonNullable: true,
       validators: [
@@ -122,7 +124,7 @@ export class ReminderCreate {
           description: values.description.trim() || null,
           priority: values.priority,
           dueDate: dueDate?.toISOString() ?? null,
-          usersEmails: [],
+          usersEmails: values.usersEmails,
         },
       })
       .pipe(finalize(() => this.isSaving.set(false)))
@@ -131,9 +133,12 @@ export class ReminderCreate {
           this.dialog().nativeElement.close();
           this.created.emit();
         },
-        error: () => {
+        error: (error: {status?: number}) => {
           this.errorMessage.set(
-            'Не удалось создать напоминание. Попробуйте ещё раз.',
+            error.status === 422 ? 'Проверьте email участников.'
+              : error.status === 400 || error.status === 404
+                ? 'Категория или её участники изменились. Проверьте выбранную категорию и список участников.'
+                : 'Не удалось создать напоминание. Попробуйте ещё раз.',
           );
         },
       });

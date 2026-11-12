@@ -30,7 +30,7 @@
 @if (menuOpen()) {
   <div id="account-options" class="account-options" role="group" aria-label="Аккаунт">
     <p class="menu-heading">Мой аккаунт</p>
-    <button class="account-option" type="button" aria-label="Профиль — скоро" disabled>
+    <a class="account-option" routerLink="/profile" (click)="closeMenu()">
       <svg
         viewBox="0 0 24 24"
         fill="none"
@@ -43,8 +43,8 @@
         <circle cx="12" cy="8" r="3" />
         <path d="M5 21v-2a7 7 0 0 1 14 0v2" />
       </svg>
-      <span>Профиль</span> <span class="soon-label">Скоро</span>
-    </button>
+      <span>Профиль</span>
+    </a>
     <div class="menu-divider"></div>
     <button class="account-option" type="button" (click)="logout()">
       <svg

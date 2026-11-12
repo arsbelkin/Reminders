@@ -5,6 +5,7 @@ import { CategoriesService, RemindersService } from '../../api/services';
 import { CategoryListViewDto } from '../../api/models/category-list-view-dto';
 import { TokenStorageService } from '../../auth/token-storage.service';
 import { ReminderEdit } from './reminder-edit';
+import { UserSearchService } from '../../shared/user-search.service';
 
 describe('ReminderEdit', () => {
   let fixture: ComponentFixture<ReminderEdit>;
@@ -12,7 +13,7 @@ describe('ReminderEdit', () => {
   let response: Subject<void>;
   let userId = signal<string | null>('owner');
   const api = {apiV1RemindersReminderIdPatch: vi.fn()};
-  const categories = {apiV1CategoriesGet$Json: vi.fn()};
+  const categories = {apiV1CategoriesGet$Json: vi.fn(), apiV1CategoriesCategoryIdGet$Json: vi.fn()};
   const data = {id: 'first', creatorId: 'owner', title: 'Отчёт', description: 'Детали', categoryId: 'work', categoryName: 'Работа', priority: 3, dueDate: '2026-11-18T10:15:24.123Z', memberEmails: ['owner@example.test', 'member@example.test'], isCompleted: 0};
   const root = () => fixture.nativeElement as HTMLElement;
   const dialog = () => root().querySelector<HTMLDialogElement>('dialog')!;
@@ -21,8 +22,10 @@ describe('ReminderEdit', () => {
     userId = signal('owner'); response = new Subject<void>();
     api.apiV1RemindersReminderIdPatch.mockReset().mockReturnValue(response.asObservable());
     categories.apiV1CategoriesGet$Json.mockReset().mockReturnValue(of([{id: 'work', title: 'Работа'}, {id: 'home', title: 'Дом'}]));
+    categories.apiV1CategoriesCategoryIdGet$Json.mockReset().mockReturnValue(of({usersEmails: [...data.memberEmails, 'new@example.test']}));
     TestBed.configureTestingModule({providers: [
       {provide: RemindersService, useValue: api}, {provide: CategoriesService, useValue: categories},
+      {provide: UserSearchService, useValue: {find: vi.fn()}},
       {provide: TokenStorageService, useValue: {userId}},
     ]});
     fixture = TestBed.createComponent(ReminderEdit); component = fixture.componentInstance;
@@ -59,6 +62,15 @@ describe('ReminderEdit', () => {
     expect(api.apiV1RemindersReminderIdPatch).toHaveBeenCalledWith({reminderId: 'first', body: {
       title: data.title, description: null, categoryId: 'home', priority: 1, dueDate: null, usersEmails: data.memberEmails,
     }});
+  });
+
+  it('replaces participants in the PATCH request and retains the draft after an error', async () => {
+    component.open(); fixture.detectChanges(); await fixture.whenStable();
+    component.form.controls.usersEmails.setValue(['owner@example.test', 'new@example.test']);
+    component.save(); response.error({status: 500});
+    expect(api.apiV1RemindersReminderIdPatch.mock.calls[0][0].body.usersEmails).toEqual(['owner@example.test', 'new@example.test']);
+    expect(component.form.controls.usersEmails.value).toEqual(['owner@example.test', 'new@example.test']);
+    expect(data.memberEmails).toEqual(['owner@example.test', 'member@example.test']);
   });
 
   it('converts an edited local date to UTC', () => {

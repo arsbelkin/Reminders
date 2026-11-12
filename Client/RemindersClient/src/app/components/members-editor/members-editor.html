@@ -1,0 +1,56 @@
+<section class="members-editor" [attr.aria-labelledby]="inputId() + '-label'" (focusout)="onFocusOut($event)">
+  <div class="members-heading"><h3 [id]="inputId() + '-label'">Участники <span>{{ emails().length }}</span></h3></div>
+  <p class="members-hint">Введите часть email и выберите пользователя. {{ categoryId() !== null ? 'Для напоминания доступны участники выбранной категории.' : '' }} Автор всегда остаётся участником.</p>
+  @if (emails().length) {
+    <ul class="selected-members" aria-label="Выбранные участники">
+      @for (email of emails(); track email) {
+        <li [class.unavailable]="outsideCategory().includes(email)">
+          <span class="member-initial" aria-hidden="true">{{ email.charAt(0).toUpperCase() }}</span>
+          <span class="member-email">{{ email }}</span>
+          @if (email === protectedEmail()) { <span class="author-label">Автор</span> }
+          @else { <button type="button" class="remove-member" [disabled]="isDisabled()" [attr.aria-label]="'Удалить участника ' + email" (click)="remove(email)">×</button> }
+        </li>
+      }
+    </ul>
+  }
+  @if (categoryId() === '') {
+    <p class="members-empty">Сначала выберите категорию.</p>
+  } @else if (loading()) {
+    <p class="members-empty" role="status">Загружаем участников категории…</p>
+  } @else if (loadError()) {
+    <div class="members-error" role="alert">Не удалось загрузить участников. <button class="retry-members" type="button" [disabled]="isDisabled()" (click)="retry()">Повторить</button></div>
+  }
+  @if (outsideCategory().length) { <p class="members-error" role="alert">Выделенные участники не входят в выбранную категорию. Удалите их или выберите другую категорию.</p> }
+  <div class="email-entry">
+    <label class="visually-hidden" [for]="inputId()">Поиск участника по email</label>
+    <input [id]="inputId()" type="text" role="combobox" placeholder="Начните вводить email…" autocomplete="off" [value]="draft()"
+      [disabled]="searchDisabled()" (input)="setDraft($event)" (focus)="focused.set(true)" (keydown)="onKeydown($event)"
+      aria-autocomplete="list" [attr.aria-expanded]="expanded()" [attr.aria-controls]="inputId() + '-options'"
+      [attr.aria-activedescendant]="expanded() && suggestions().length ? inputId() + '-option-' + activeIndex() : null"
+      [attr.aria-describedby]="inputId() + '-feedback'" />
+    @if (draft()) { <button type="button" class="clear-search" aria-label="Очистить поиск участников" [disabled]="isDisabled()" (click)="clearSearch()">×</button> }
+  </div>
+  @if (expanded()) {
+    <div class="search-results">
+      @if (searchState() === 'loading') { <p class="search-status" role="status">Ищем пользователей…</p> }
+      @else if (searchState() === 'error') {
+        <p class="members-error" role="alert">Не удалось найти пользователей. <button class="retry-members" type="button" (click)="retrySearch()">Повторить</button></p>
+      }
+      <div [id]="inputId() + '-options'" role="listbox" aria-label="Найденные пользователи">
+        @for (user of suggestions(); track user.id; let i = $index) {
+          <button type="button" role="option" class="user-option" [class.active]="activeIndex() === i" [attr.aria-selected]="activeIndex() === i"
+            [id]="inputId() + '-option-' + i" [disabled]="searchDisabled()" (click)="choose(user)">
+            <span class="member-initial" aria-hidden="true">{{ (user.username || user.email || '?').charAt(0).toUpperCase() }}</span>
+            <span class="user-option-copy"><strong>{{ user.username || 'Пользователь' }}</strong><span>{{ user.email }}</span></span>
+            <span class="choose-user" aria-hidden="true">+</span>
+          </button>
+        } @empty {
+          @if (searchState() === 'ready') { <p class="search-status" role="status">{{ categoryId() === null ? 'Подходящих пользователей нет или они уже добавлены.' : 'Среди участников категории совпадений нет или они уже добавлены.' }}</p> }
+        }
+      </div>
+    </div>
+  }
+  <div [id]="inputId() + '-feedback'" aria-live="polite">
+    @if (draft().trim()) { <p class="members-hint">Выберите пользователя из подсказок или очистите поиск.</p> }
+  </div>
+</section>

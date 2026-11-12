@@ -7,12 +7,12 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
-import { AdminReportModel } from '../../models/admin-report-model';
+import { AdminResponseModel } from '../../models/admin-response-model';
 
 export interface ApiV1AdminReportGet$Json$Params {
 }
 
-export function apiV1AdminReportGet$Json(http: HttpClient, rootUrl: string, params?: ApiV1AdminReportGet$Json$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<AdminReportModel>>> {
+export function apiV1AdminReportGet$Json(http: HttpClient, rootUrl: string, params?: ApiV1AdminReportGet$Json$Params, context?: HttpContext): Observable<StrictHttpResponse<AdminResponseModel>> {
   const rb = new RequestBuilder(rootUrl, apiV1AdminReportGet$Json.PATH, 'get');
   if (params) {
   }
@@ -22,7 +22,7 @@ export function apiV1AdminReportGet$Json(http: HttpClient, rootUrl: string, para
   ).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
-      return r as StrictHttpResponse<Array<AdminReportModel>>;
+      return r as StrictHttpResponse<AdminResponseModel>;
     })
   );
 }

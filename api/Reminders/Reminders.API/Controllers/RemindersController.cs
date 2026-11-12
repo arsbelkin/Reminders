@@ -15,20 +15,21 @@ public class RemindersController : Controller
 {
     private readonly IReminderService _reminderService;
     private readonly IMapper _mapper;
+    private readonly IUserService _userService;
 
-    public RemindersController(IReminderService reminderService, IMapper mapper)
+    public RemindersController(IReminderService reminderService, IMapper mapper, IUserService userService)
     {
         _reminderService = reminderService;
         _mapper = mapper;
+        _userService = userService;
     }
 
     [HttpPost]
     public async Task<ActionResult<IdResponseDTO>> Create([FromBody] ReminderRequestDTO dto)
     {
-        var userEmail =  User.FindFirstValue(ClaimTypes.Email);
-        
         var createDto = _mapper.Map<ReminderCreateDTO>(dto);
         createDto.CreatorId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        var userEmail = (await _userService.GetUserInfoAsync(createDto.CreatorId)).Email;
         
         if (!createDto.UsersEmails.Contains(userEmail))
             createDto.UsersEmails.Add(userEmail);
@@ -70,9 +71,8 @@ public class RemindersController : Controller
     [HttpPatch("{reminderId:guid}")]
     public async Task<ActionResult> UpdateReminder(Guid reminderId, [FromBody] ReminderRequestDTO dto)
     {
-        var userEmail = User.FindFirstValue(ClaimTypes.Email);
-        
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        var userEmail = (await _userService.GetUserInfoAsync(userId)).Email;
         
         if (!dto.UsersEmails.Contains(userEmail))
             dto.UsersEmails.Add(userEmail);

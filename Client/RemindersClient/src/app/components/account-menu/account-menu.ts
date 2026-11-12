@@ -1,10 +1,11 @@
 import { Component, ElementRef, effect, inject, signal, viewChild } from '@angular/core';
 import { TokenStorageService } from '../../auth/token-storage.service';
 import { UserAvatarService } from '../../auth/user-avatar.service';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-account-menu',
+  imports: [RouterLink],
   templateUrl: './account-menu.html',
   styleUrl: './account-menu.css',
   host: {

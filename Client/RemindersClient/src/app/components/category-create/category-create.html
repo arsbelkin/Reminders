@@ -54,6 +54,7 @@
             placeholder="О чём эта категория?" aria-describedby="category-description-hint"></textarea>
           <p id="category-description-hint" class="field-hint">Короткая заметка, чтобы не забыть важное.</p>
         </div>
+        <app-members-editor formControlName="usersEmails" inputId="category-create-members" [disabled]="isSaving()" />
       </fieldset>
 
       @if (errorMessage()) {

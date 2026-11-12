@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { App } from './app';
 import { TokenStorageService } from './auth/token-storage.service';
 import { authInterceptor } from './auth/auth.interceptor';
@@ -62,7 +62,19 @@ describe('App account menu', () => {
     expect(root.querySelector('.header__name')?.textContent).toBe('Reminders');
     expect(root.querySelector('app-account-menu')).toBeNull();
     expect(root.querySelector('.header__notifications')).toBeNull();
+    expect(root.querySelector('.header__reports')).toBeNull();
     http.expectNone(avatarEndpoint);
+  });
+
+  it('shows reports only for an administrator and reacts to account changes', () => {
+    const jwt = (role: string) => 'header.' + btoa(JSON.stringify({role})).replace(/=/g, '') + '.signature';
+    const root = mount();
+    signIn(jwt('User')); fixture.detectChanges(); flushAvatar();
+    expect(root.querySelector('.header__reports')).toBeNull();
+    signIn(jwt('Admin')); fixture.detectChanges(); flushAvatar();
+    expect(root.querySelector('.header__reports')?.getAttribute('href')).toBe('/reports');
+    TestBed.inject(TokenStorageService).clearToken(); fixture.detectChanges();
+    expect(root.querySelector('.header__reports')).toBeNull();
   });
 
   it('restores a saved session and requests the avatar as a blob with the Bearer token', () => {
@@ -114,11 +126,11 @@ describe('App account menu', () => {
     trigger.click();
     fixture.detectChanges();
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
-    const items = root.querySelectorAll<HTMLButtonElement>('.account-option');
+    const items = root.querySelectorAll<HTMLElement>('.account-option');
     expect([...items].map(item => item.querySelector('span')?.textContent))
       .toEqual(['Профиль', 'Выйти']);
-    expect(items[0].disabled).toBe(true);
-    expect(items[1].disabled).toBe(false);
+    expect(items[0].getAttribute('href')).toBe('/profile');
+    expect((items[1] as HTMLButtonElement).disabled).toBe(false);
     document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true}));
     fixture.detectChanges();
     expect(root.querySelector('.account-options')).toBeNull();
@@ -129,6 +141,15 @@ describe('App account menu', () => {
     fixture.detectChanges();
     expect(root.querySelector('.account-options')).toBeNull();
     expect(TestBed.inject(TokenStorageService).getToken()).toBe('access-token');
+  });
+
+  it('opens the profile from the account menu and closes the choices', () => {
+    signIn(); const root = mount(); flushAvatar();
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    root.querySelector<HTMLButtonElement>('.account-button')!.click(); fixture.detectChanges();
+    root.querySelector<HTMLAnchorElement>('a.account-option')!.click(); fixture.detectChanges();
+    expect(navigate).toHaveBeenCalledTimes(1);
+    expect(root.querySelector('.account-options')).toBeNull();
   });
 
   it('removes the avatar and menu and releases the object URL when the session is cleared', () => {
