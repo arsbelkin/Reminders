@@ -1,4 +1,5 @@
-﻿using Reminders.Domain.Models;
+﻿using Reminders.Application.TransferModels.User;
+using Reminders.Domain.Models;
 
 namespace Reminders.Application.Repositories.Interfaces;
 
@@ -12,4 +13,6 @@ public interface IUserRepository
     public Task<bool> CheckUserByIdAsync(Guid userId);
     public Task<User?> GetUserByIdAsync(Guid userId);
     public Task UpdateUserAsync(User user);
+    
+    public Task<UserInfoDTO> GetUserInfoAsync(Guid userId);
 }

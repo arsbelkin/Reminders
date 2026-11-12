@@ -45,4 +45,14 @@ public class UserService : IUserService
         
         return await _fileManager.ReadAsync(user.AvatarFileName);
     }
+
+    public async Task<UserInfoDTO> GetUserInfoAsync(Guid userId)
+    {
+        var res = await _userRepository.GetUserInfoAsync(userId);
+
+        if (res == null)
+            throw new NotValidUserException();
+
+        return res;
+    }
 }

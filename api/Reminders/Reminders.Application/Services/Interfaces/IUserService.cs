@@ -6,4 +6,6 @@ public interface IUserService
 {
     public Task LoadAvatarAsync(Guid userId, UserFileDTO dto);
     public Task<UserFileDTO?> GetAvatarAsync(Guid userId);
+    
+    public Task<UserInfoDTO> GetUserInfoAsync(Guid userId);
 }

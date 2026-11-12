@@ -1,17 +1,21 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using MapsterMapper;
+using Microsoft.EntityFrameworkCore;
 using Reminders.Domain.Models;
 using Reminders.Infrastructure.Contexts;
 using Reminders.Application.Repositories.Interfaces;
+using Reminders.Application.TransferModels.User;
 
 namespace Reminders.Infrastructure.Repositories;
 
 public class UserRepository : IUserRepository
 {
     private readonly RemindersContext _dbContext;
+    private readonly IMapper _mapper;
     
-    public UserRepository(RemindersContext dbContext)
+    public UserRepository(RemindersContext dbContext,  IMapper mapper)
     {
         _dbContext = dbContext;
+        _mapper = mapper;
     }
     
     public async Task CreateUserAsync(User user)
@@ -61,5 +65,15 @@ public class UserRepository : IUserRepository
     {
         _dbContext.Users.Update(user);
         await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task<UserInfoDTO?> GetUserInfoAsync(Guid userId)
+    {
+        var res = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (res == null)
+            return null;
+        
+        return _mapper.Map<UserInfoDTO>(res);
     }
 }

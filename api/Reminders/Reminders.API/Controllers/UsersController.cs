@@ -70,4 +70,13 @@ public class UsersController : Controller
         
         return File(avatar.File, contentType);
     }
+
+    [HttpGet]
+    public async Task<ActionResult<UserInfoDTO>> GetInfoAsync()
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        
+        var res = await _userService.GetUserInfoAsync(userId);
+        return Ok(res);
+    }
 }
