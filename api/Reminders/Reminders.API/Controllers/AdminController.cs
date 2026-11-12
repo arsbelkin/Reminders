@@ -18,9 +18,14 @@ public class AdminController : Controller
     }
     
     [HttpGet("report")]
-    public async Task<ActionResult<List<AdminReportModel>>> GetReport()
+    public async Task<ActionResult<AdminResponseModel>> GetReport()
     {
         var report = await _adminService.GetAdminReportAsync();
-        return Ok(report);
+        return Ok(new AdminResponseModel
+        {
+            Title = "Статистика по пользователям",
+            Description = "Кол-во напоминаний и выполненных",
+            Report = report
+        });
     }
 }
