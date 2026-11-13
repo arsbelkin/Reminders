@@ -1,13 +1,24 @@
-<article class="reminder-card"
+<article
+  class="reminder-card"
   [attr.data-priority]="reminder().priority ?? 0"
-  [class.reminder-card--completed]="reminder().isCompleted === 1">
+  [class.reminder-card--completed]="reminder().isCompleted === 1"
+>
   <div class="card-category">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.7"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
       <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
     </svg>
     @if (reminder().categoryId; as categoryId) {
-      <a [routerLink]="['/categories', categoryId]">{{ reminder().categoryName || 'Без категории' }}</a>
+      <a [routerLink]="['/categories', categoryId]">{{
+        reminder().categoryName || 'Без категории'
+      }}</a>
     } @else {
       <span>{{ reminder().categoryName || 'Без категории' }}</span>
     }
@@ -26,9 +37,19 @@
       <span class="visually-hidden">Приоритет: </span>
       {{ priorityLabels[reminder().priority ?? 0] ?? 'Неизвестен' }}
     </span>
-    <span class="completion-status" [class.completion-status--completed]="reminder().isCompleted === 1">
-      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"
-        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <span
+      class="completion-status"
+      [class.completion-status--completed]="reminder().isCompleted === 1"
+    >
+      <svg
+        viewBox="0 0 20 20"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
         @if (reminder().isCompleted === 1) {
           <circle cx="10" cy="10" r="7.25" />
           <path d="m6.75 10 2.1 2.1 4.4-4.4" />

@@ -38,17 +38,18 @@ export class ReminderTable {
     }
 
     const direction = sorting.direction === 'ascending' ? 1 : -1;
-    return [...reminders].sort((left, right) =>
-      direction * this.compare(left, right, sorting.column),
+    return [...reminders].sort(
+      (left, right) => direction * this.compare(left, right, sorting.column),
     );
   });
 
   sortBy(column: SortColumn): void {
     this.sorting.update((current) => ({
       column,
-      direction: current?.column === column && current.direction === 'ascending'
-        ? 'descending'
-        : 'ascending',
+      direction:
+        current?.column === column && current.direction === 'ascending'
+          ? 'descending'
+          : 'ascending',
     }));
   }
 
@@ -59,7 +60,11 @@ export class ReminderTable {
       : 'Сортировать по возрастанию';
   }
 
-  private compare(left: ReminderListViewDto, right: ReminderListViewDto, column: SortColumn): number {
+  private compare(
+    left: ReminderListViewDto,
+    right: ReminderListViewDto,
+    column: SortColumn,
+  ): number {
     if (column === 'priority' || column === 'isCompleted') {
       return (left[column] ?? 0) - (right[column] ?? 0);
     }

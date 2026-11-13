@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AccountMenu } from './components/account-menu/account-menu';
 import { TokenStorageService } from './auth/token-storage.service';
@@ -11,5 +11,4 @@ import { TokenStorageService } from './auth/token-storage.service';
 })
 export class App {
   readonly tokenStorage = inject(TokenStorageService);
-  protected readonly title = signal('RemindersClient');
 }

@@ -18,7 +18,7 @@ export class UserAvatarService {
     const root = this.config.rootUrl.replace(/\/+$/, '');
     return this.http.get(root + UsersService.ApiV1UsersAvatarGetPath, {
       responseType: 'blob',
-      params: this.revision() ? {v: this.revision()} : undefined,
+      params: this.revision() ? { v: this.revision() } : undefined,
     });
   }
 
@@ -30,7 +30,7 @@ export class UserAvatarService {
     const root = this.config.rootUrl.replace(/\/+$/, '');
     return this.http.put<void>(root + UsersService.ApiV1UsersAvatarPutPath, body).pipe(
       tap(() => {
-        if (token === this.session.token()) this.changed.update(value => value + 1);
+        if (token === this.session.token()) this.changed.update((value) => value + 1);
       }),
     );
   }
@@ -40,7 +40,7 @@ export class UserAvatarService {
     const root = this.config.rootUrl.replace(/\/+$/, '');
     return this.http.delete<void>(root + UsersService.ApiV1UsersAvatarGetPath).pipe(
       tap(() => {
-        if (token === this.session.token()) this.changed.update(value => value + 1);
+        if (token === this.session.token()) this.changed.update((value) => value + 1);
       }),
     );
   }

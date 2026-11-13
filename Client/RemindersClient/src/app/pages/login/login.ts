@@ -1,4 +1,12 @@
-import { Component, DestroyRef, ElementRef, output, signal, viewChild, inject } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  output,
+  signal,
+  viewChild,
+  inject,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -85,7 +93,10 @@ export class Login {
           password: values.password,
         },
       })
-      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.isSubmitting.set(false)))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isSubmitting.set(false)),
+      )
       .subscribe({
         next: (response) => {
           if (!response.token) {

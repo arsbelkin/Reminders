@@ -28,7 +28,10 @@ import { ReminderListViewDto } from '../../api/models/reminder-list-view-dto';
 import { PRIORITY_LABELS } from '../../shared/reminder-labels';
 import { TokenStorageService } from '../../auth/token-storage.service';
 import { ReminderEdit } from '../../components/reminder-edit/reminder-edit';
-import { NotificationCreate, NotificationCreated } from '../../components/notification-create/notification-create';
+import {
+  NotificationCreate,
+  NotificationCreated,
+} from '../../components/notification-create/notification-create';
 
 type DetailState =
   | { kind: 'loading' }
@@ -47,7 +50,9 @@ type DetailState =
   ],
 })
 export class ReminderDetails {
-  private readonly notificationWindow = viewChild.required<NotificationCreate>('notificationCreateWindow');
+  private readonly notificationWindow = viewChild.required<NotificationCreate>(
+    'notificationCreateWindow',
+  );
   readonly notificationCreated = signal<NotificationCreated | null>(null);
 
   onNotificationCreated(result: NotificationCreated): void {
@@ -118,8 +123,11 @@ export class ReminderDetails {
   readonly canDelete = computed(() => {
     const current = this.state();
     const userId = this.tokenStorage.userId();
-    return current.kind === 'ready' && !!userId &&
-      current.reminder.creatorId?.trim().toLowerCase() === userId;
+    return (
+      current.kind === 'ready' &&
+      !!userId &&
+      current.reminder.creatorId?.trim().toLowerCase() === userId
+    );
   });
   readonly editableReminder = computed(() => {
     const current = this.state();
@@ -130,7 +138,7 @@ export class ReminderDetails {
     this.navigationLoaded = false;
     if (id === this.reminderId()) this.reload.next();
   }
-  readonly deleteTarget = signal<{id: string; title: string} | null>(null);
+  readonly deleteTarget = signal<{ id: string; title: string } | null>(null);
   readonly isDeleting = signal(false);
   readonly deleteError = signal<string | null>(null);
   readonly isCompleting = signal(false);
@@ -153,34 +161,47 @@ export class ReminderDetails {
   }
 
   private changeCompletion(reopen: boolean): void {
-    if (!(reopen ? this.canReopen() : this.canComplete()) || this.isCompleting() || this.isDeleting() || this.editWindow().isSaving() || this.notificationWindow().busy()) return;
+    if (
+      !(reopen ? this.canReopen() : this.canComplete()) ||
+      this.isCompleting() ||
+      this.isDeleting() ||
+      this.editWindow().isSaving() ||
+      this.notificationWindow().busy()
+    )
+      return;
     const id = this.reminderId();
     const ownerId = this.tokenStorage.userId();
     this.isCompleting.set(true);
     this.completionError.set(null);
     const request = reopen
-      ? this.api.apiV1RemindersReminderIdReopenPost({reminderId: id})
-      : this.api.apiV1RemindersReminderIdCompletePost({reminderId: id});
-    request.pipe(
-      takeUntilDestroyed(this.destroyRef),
-      finalize(() => this.isCompleting.set(false)),
-    ).subscribe({
-      next: () => {
-        this.navigationReminders.update(items => reopen
-          ? items.map(item => item.id === id ? {...item, isCompleted: 0} : item)
-          : items.filter(item => item.id !== id));
-        if (this.reminderId() === id && this.tokenStorage.userId() === ownerId) {
-          this.reload.next();
-        }
-      },
-      error: (error: {status?: number}) => {
-        if (this.reminderId() !== id || this.tokenStorage.userId() !== ownerId) return;
-        const action = reopen ? 'возобновить' : 'завершить';
-        this.completionError.set(error.status === 403 || error.status === 404
-          ? `Не удалось ${action} напоминание: оно удалено или у вас нет прав.`
-          : `Не удалось ${action} напоминание. Попробуйте ещё раз.`);
-      },
-    });
+      ? this.api.apiV1RemindersReminderIdReopenPost({ reminderId: id })
+      : this.api.apiV1RemindersReminderIdCompletePost({ reminderId: id });
+    request
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isCompleting.set(false)),
+      )
+      .subscribe({
+        next: () => {
+          this.navigationReminders.update((items) =>
+            reopen
+              ? items.map((item) => (item.id === id ? { ...item, isCompleted: 0 } : item))
+              : items.filter((item) => item.id !== id),
+          );
+          if (this.reminderId() === id && this.tokenStorage.userId() === ownerId) {
+            this.reload.next();
+          }
+        },
+        error: (error: { status?: number }) => {
+          if (this.reminderId() !== id || this.tokenStorage.userId() !== ownerId) return;
+          const action = reopen ? 'возобновить' : 'завершить';
+          this.completionError.set(
+            error.status === 403 || error.status === 404
+              ? `Не удалось ${action} напоминание: оно удалено или у вас нет прав.`
+              : `Не удалось ${action} напоминание. Попробуйте ещё раз.`,
+          );
+        },
+      });
   }
 
   constructor() {
@@ -201,8 +222,19 @@ export class ReminderDetails {
 
   openDelete(): void {
     const current = this.state();
-    if (this.isDeleting() || this.isCompleting() || this.editWindow().isSaving() || this.notificationWindow().busy() || !this.canDelete() || current.kind !== 'ready') return;
-    this.deleteTarget.set({id: this.reminderId(), title: current.reminder.title || 'Без названия'});
+    if (
+      this.isDeleting() ||
+      this.isCompleting() ||
+      this.editWindow().isSaving() ||
+      this.notificationWindow().busy() ||
+      !this.canDelete() ||
+      current.kind !== 'ready'
+    )
+      return;
+    this.deleteTarget.set({
+      id: this.reminderId(),
+      title: current.reminder.title || 'Без названия',
+    });
     this.deleteError.set(null);
     this.deleteDialog().nativeElement.showModal();
   }
@@ -225,30 +257,36 @@ export class ReminderDetails {
 
   deleteReminder(): void {
     const target = this.deleteTarget();
-    if (!target || this.isDeleting() || !this.canDelete() || target.id !== this.reminderId()) return;
+    if (!target || this.isDeleting() || !this.canDelete() || target.id !== this.reminderId())
+      return;
     const ownerId = this.tokenStorage.userId();
     this.isDeleting.set(true);
     this.deleteError.set(null);
-    this.api.apiV1RemindersReminderIdDelete({reminderId: target.id}).pipe(
-      takeUntilDestroyed(this.destroyRef),
-      finalize(() => this.isDeleting.set(false)),
-    ).subscribe({
-      next: () => {
-        this.deleteDialog().nativeElement.close();
-        this.deleteTarget.set(null);
-        this.navigationReminders.update(items => items.filter(item => item.id !== target.id));
-        if (this.reminderId() === target.id && this.tokenStorage.userId() === ownerId) {
-          void this.router.navigate(['/reminders'], {replaceUrl: true});
-        }
-      },
-      error: (error: {status?: number}) => {
-        this.deleteError.set(error.status === 403
-          ? 'Недостаточно прав для удаления напоминания.'
-          : error.status === 404
-            ? 'Напоминание уже удалено или у вас нет прав на его удаление.'
-            : 'Не удалось удалить напоминание. Попробуйте ещё раз.');
-      },
-    });
+    this.api
+      .apiV1RemindersReminderIdDelete({ reminderId: target.id })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isDeleting.set(false)),
+      )
+      .subscribe({
+        next: () => {
+          this.deleteDialog().nativeElement.close();
+          this.deleteTarget.set(null);
+          this.navigationReminders.update((items) => items.filter((item) => item.id !== target.id));
+          if (this.reminderId() === target.id && this.tokenStorage.userId() === ownerId) {
+            void this.router.navigate(['/reminders'], { replaceUrl: true });
+          }
+        },
+        error: (error: { status?: number }) => {
+          this.deleteError.set(
+            error.status === 403
+              ? 'Недостаточно прав для удаления напоминания.'
+              : error.status === 404
+                ? 'Напоминание уже удалено или у вас нет прав на его удаление.'
+                : 'Не удалось удалить напоминание. Попробуйте ещё раз.',
+          );
+        },
+      });
   }
 
   readonly navigationReminders = signal<ReminderListViewDto[]>([]);

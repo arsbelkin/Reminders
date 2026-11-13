@@ -1,5 +1,10 @@
 import { Component } from '@angular/core';
-import { HttpClient, HttpErrorResponse, provideHttpClient, withInterceptors } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  provideHttpClient,
+  withInterceptors,
+} from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
@@ -25,7 +30,9 @@ describe('authInterceptor', () => {
   let storedToken: string | null;
   const tokenStorage = {
     getToken: vi.fn(() => storedToken),
-    clearToken: vi.fn(() => { storedToken = null; }),
+    clearToken: vi.fn(() => {
+      storedToken = null;
+    }),
   };
 
   function failRequest(url = remindersUrl, status = 401) {

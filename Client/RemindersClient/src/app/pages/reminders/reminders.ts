@@ -39,7 +39,12 @@ interface ReminderCategoryGroup {
     '(document:click)': 'onDocumentClick($event)',
     '(document:keydown.escape)': 'closeCreateMenu(true)',
   },
-  styleUrls: ['./reminders.css', './reminders-search.css', './reminders-categories.css', './reminders-category-heading.css'],
+  styleUrls: [
+    './reminders.css',
+    './reminders-search.css',
+    './reminders-categories.css',
+    './reminders-category-heading.css',
+  ],
   templateUrl: './reminders.html',
 })
 export class Reminders implements OnInit {
@@ -49,7 +54,7 @@ export class Reminders implements OnInit {
   readonly createMenuOpen = signal(false);
 
   toggleCreateMenu(): void {
-    this.createMenuOpen.update(open => !open);
+    this.createMenuOpen.update((open) => !open);
   }
 
   closeCreateMenu(restoreFocus = false): void {
@@ -256,6 +261,9 @@ export class Reminders implements OnInit {
   }
 
   toggleCompleted(): void {
-    this.applyFilters({...this.appliedFilters(), completedStatus: this.appliedFilters().completedStatus === 0 ? null : 0});
+    this.applyFilters({
+      ...this.appliedFilters(),
+      completedStatus: this.appliedFilters().completedStatus === 0 ? null : 0,
+    });
   }
 }

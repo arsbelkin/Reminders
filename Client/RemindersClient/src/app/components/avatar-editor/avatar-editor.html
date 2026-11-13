@@ -1,27 +1,65 @@
 <div class="avatar-controls" [attr.aria-busy]="busy()">
-  <input #avatarInput type="file" hidden accept=".jpg,.jpeg,.png,image/jpeg,image/png" aria-label="Выбрать фото профиля" [disabled]="blocked()" (change)="selectFile($event)" />
+  <input
+    #avatarInput
+    type="file"
+    hidden
+    accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+    aria-label="Выбрать фото профиля"
+    [disabled]="blocked()"
+    (change)="selectFile($event)"
+  />
   @if (file(); as selected) {
-    <p class="avatar-file">Новое фото: <span>{{ selected.name }}</span></p>
+    <p class="avatar-file">
+      Новое фото: <span>{{ selected.name }}</span>
+    </p>
     <div class="avatar-actions">
       <button type="button" class="save-avatar" [disabled]="blocked()" (click)="save()">
-        @if (busy()) { <span class="avatar-spinner" aria-hidden="true"></span> }
+        @if (busy()) {
+          <span class="avatar-spinner" aria-hidden="true"></span>
+        }
         {{ busy() ? 'Сохраняем фото…' : 'Сохранить фото' }}
       </button>
-      <button type="button" class="cancel-avatar" [disabled]="blocked()" (click)="cancel()">Отмена</button>
+      <button type="button" class="cancel-avatar" [disabled]="blocked()" (click)="cancel()">
+        Отмена
+      </button>
     </div>
   } @else {
     <div class="avatar-actions">
-    <button type="button" class="select-avatar" [disabled]="blocked()" (click)="avatarInput.click()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h4l2-3h4l2 3h4v14H4Z"/><circle cx="12" cy="12" r="4"/></svg>
-      Изменить фото
-    </button>
-    @if (hasAvatar() || deleting()) {
-      <button type="button" class="delete-avatar" [disabled]="blocked()" (click)="remove()">{{ deleting() ? 'Удаляем фото…' : 'Удалить фото' }}</button>
-    }
+      <button
+        type="button"
+        class="select-avatar"
+        [disabled]="blocked()"
+        (click)="avatarInput.click()"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M4 6h4l2-3h4l2 3h4v14H4Z" />
+          <circle cx="12" cy="12" r="4" />
+        </svg>
+        Изменить фото
+      </button>
+      @if (hasAvatar() || deleting()) {
+        <button type="button" class="delete-avatar" [disabled]="blocked()" (click)="remove()">
+          {{ deleting() ? 'Удаляем фото…' : 'Удалить фото' }}
+        </button>
+      }
     </div>
   }
   <p class="avatar-hint">JPG или PNG, до 2 МБ</p>
-  @if (error(); as message) { <p class="avatar-error" role="alert">{{ message }}</p> }
-  @if (saved()) { <p class="avatar-success" role="status">Фото профиля обновлено.</p> }
-  @if (deleted()) { <p class="avatar-success" role="status">Фото удалено. Отображается стандартная иконка.</p> }
+  @if (error(); as message) {
+    <p class="avatar-error" role="alert">{{ message }}</p>
+  }
+  @if (saved()) {
+    <p class="avatar-success" role="status">Фото профиля обновлено.</p>
+  }
+  @if (deleted()) {
+    <p class="avatar-success" role="status">Фото удалено. Отображается стандартная иконка.</p>
+  }
 </div>

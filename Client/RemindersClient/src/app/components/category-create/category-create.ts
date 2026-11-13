@@ -21,7 +21,7 @@ export class CategoryCreate {
   readonly errorMessage = signal<string | null>(null);
 
   readonly form = new FormGroup({
-    usersEmails: new FormControl<string[]>([], {nonNullable: true}),
+    usersEmails: new FormControl<string[]>([], { nonNullable: true }),
     title: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(/\S/)],
@@ -85,10 +85,12 @@ export class CategoryCreate {
           this.dialog().nativeElement.close();
           this.created.emit();
         },
-        error: (error: {status?: number}) => {
-          this.errorMessage.set(error.status === 422
-            ? 'Проверьте email участников: все пользователи должны быть зарегистрированы.'
-            : 'Не удалось создать категорию. Попробуйте ещё раз.');
+        error: (error: { status?: number }) => {
+          this.errorMessage.set(
+            error.status === 422
+              ? 'Проверьте email участников: все пользователи должны быть зарегистрированы.'
+              : 'Не удалось создать категорию. Попробуйте ещё раз.',
+          );
         },
       });
   }

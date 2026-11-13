@@ -3,7 +3,7 @@ import { from, mergeMap, of, switchMap, toArray } from 'rxjs';
 import { UsersService } from '../api/services';
 import { UserInfoDto } from '../api/models/user-info-dto';
 
-@Injectable({providedIn: 'root'})
+@Injectable({ providedIn: 'root' })
 export class UserSearchService {
   private readonly api = inject(UsersService);
 
@@ -15,11 +15,15 @@ export class UserSearchService {
   find(field: 'username' | 'email', text: string) {
     const value = text.trim();
     if (!value) return of<UserInfoDto[]>([]);
-    return this.api.apiV1UsersGet$Json(field === 'email' ? {Email: value} : {Username: value}).pipe(
-      switchMap(result => from([...new Set(result.ids ?? [])]).pipe(
-        mergeMap(id => this.api.apiV1UsersIdGet$Json({id}), 4),
-        toArray(),
-      )),
-    );
+    return this.api
+      .apiV1UsersGet$Json(field === 'email' ? { Email: value } : { Username: value })
+      .pipe(
+        switchMap((result) =>
+          from([...new Set(result.ids ?? [])]).pipe(
+            mergeMap((id) => this.api.apiV1UsersIdGet$Json({ id }), 4),
+            toArray(),
+          ),
+        ),
+      );
   }
 }

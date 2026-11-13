@@ -10,6 +10,6 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
-    provideApiConfiguration('http://localhost:5041')
-  ]
+    provideApiConfiguration('http://localhost:5041'),
+  ],
 };

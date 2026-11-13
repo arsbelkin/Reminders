@@ -44,10 +44,15 @@ export class NotificationActions {
     sessionToken: string;
   } | null>(null);
   readonly canManage = computed(() => !!this.session.token() && !!this.notification()?.id);
-  readonly recurrencyOptions = Object.entries(NOTIFICATION_RECURRENCY_LABELS).map(([value, label]) => ({value: Number(value), label}));
+  readonly recurrencyOptions = Object.entries(NOTIFICATION_RECURRENCY_LABELS).map(
+    ([value, label]) => ({ value: Number(value), label }),
+  );
   readonly form = new FormGroup({
-    notificationTime: new FormControl('', {nonNullable: true, validators: [Validators.required]}),
-    recurrency: new FormControl(0, {nonNullable: true, validators: [Validators.required, Validators.pattern(/^(0|1|7|31|355)$/)]}),
+    notificationTime: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    recurrency: new FormControl(0, {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(/^(0|1|7|31|355)$/)],
+    }),
   });
 
   constructor() {
@@ -72,8 +77,14 @@ export class NotificationActions {
     if (!notification || !sessionToken || !this.canManage() || this.busy()) return;
     const localDate = this.toLocalDate(notification.notificationTime);
     this.mode.set(mode);
-    this.target.set({id: this.notificationId(), title: notification.reminderTitle || 'Без названия', notificationTime: notification.notificationTime, localDate, sessionToken});
-    this.form.reset({notificationTime: localDate, recurrency: notification.recurrency ?? 0});
+    this.target.set({
+      id: this.notificationId(),
+      title: notification.reminderTitle || 'Без названия',
+      notificationTime: notification.notificationTime,
+      localDate,
+      sessionToken,
+    });
+    this.form.reset({ notificationTime: localDate, recurrency: notification.recurrency ?? 0 });
     this.error.set(null);
     this.dialog().nativeElement.showModal();
   }
@@ -109,7 +120,7 @@ export class NotificationActions {
     const values = this.form.getRawValue();
     const date = new Date(values.notificationTime);
     if (!deleting && Number.isNaN(date.getTime())) {
-      this.form.controls.notificationTime.setErrors({invalidDate: true});
+      this.form.controls.notificationTime.setErrors({ invalidDate: true });
       return;
     }
     this.busy.set(true);
@@ -119,8 +130,10 @@ export class NotificationActions {
       : this.api.apiV1NotificationsNotificationIdPatch({
           notificationId: target.id,
           body: {
-            notificationTime: values.notificationTime === target.localDate && target.notificationTime
-              ? target.notificationTime : date.toISOString(),
+            notificationTime:
+              values.notificationTime === target.localDate && target.notificationTime
+                ? target.notificationTime
+                : date.toISOString(),
             recurrency: values.recurrency,
           },
         });
