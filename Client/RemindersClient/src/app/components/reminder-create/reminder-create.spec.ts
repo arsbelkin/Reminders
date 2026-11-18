@@ -33,6 +33,18 @@ describe('ReminderCreate', () => {
     expect(component).toBeTruthy();
   });
 
+  it('sends a category ID and numeric priority chosen through the custom dropdowns', async () => {
+    component.open(); component.form.controls.title.setValue('Задача'); fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('#reminder-category')!.click(); fixture.detectChanges();
+    root.querySelector<HTMLButtonElement>('#reminder-category-options [role="option"]')!.click(); fixture.detectChanges();
+    await fixture.whenStable();
+    root.querySelector<HTMLButtonElement>('#reminder-priority')!.click(); fixture.detectChanges();
+    root.querySelectorAll<HTMLButtonElement>('#reminder-priority-options [role="option"]')[4].click(); fixture.detectChanges();
+    component.save();
+    expect(api.apiV1RemindersPost$Json.mock.calls[0][0].body).toMatchObject({categoryId: 'work', priority: 4});
+  });
+
   it('creates a reminder with participants selected from its category', async () => {
     component.open(); component.form.patchValue({title: ' Задача ', categoryId: 'work'});
     fixture.detectChanges(); await fixture.whenStable();

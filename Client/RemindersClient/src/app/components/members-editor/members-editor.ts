@@ -28,7 +28,7 @@ import { switchMap, timer } from 'rxjs';
 @Component({
   selector: 'app-members-editor',
   templateUrl: './members-editor.html',
-  styleUrl: './members-editor.css',
+  styleUrls: ['./members-editor.css', './members-editor-reminder.css'],
   providers: [
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => MembersEditor), multi: true },
     { provide: NG_VALIDATORS, useExisting: forwardRef(() => MembersEditor), multi: true },

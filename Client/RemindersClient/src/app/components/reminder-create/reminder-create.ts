@@ -1,14 +1,15 @@
-import { Component, ElementRef, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { RemindersService } from '../../api/services';
 import { CategoryListViewDto } from '../../api/models/category-list-view-dto';
 import { PRIORITY_LABELS } from '../../shared/reminder-labels';
 import { MembersEditor } from '../members-editor/members-editor';
+import { SelectField, SelectOption } from '../select-field/select-field';
 
 @Component({
   selector: 'app-reminder-create',
-  imports: [ReactiveFormsModule, MembersEditor],
+  imports: [ReactiveFormsModule, MembersEditor, SelectField],
   templateUrl: './reminder-create.html',
   styleUrls: ['./reminder-create.css', './reminder-create-fields.css'],
 })
@@ -18,6 +19,8 @@ export class ReminderCreate {
   private readonly dialog = viewChild.required<ElementRef<HTMLDialogElement>>('reminderDialog');
 
   readonly categories = input<CategoryListViewDto[]>([]);
+  readonly categoryOptions = computed<SelectOption[]>(() => this.categories()
+    .filter(category => !!category.id).map(category => ({value: category.id!, label: category.title || 'Без названия'})));
   readonly created = output<void>();
 
   readonly isSaving = signal(false);

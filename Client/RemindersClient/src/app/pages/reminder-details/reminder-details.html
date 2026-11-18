@@ -112,7 +112,7 @@
         <h2>Сведения</h2>
         <dl>
           <div><dt>Дата создания</dt><dd><time [attr.datetime]="reminder.createdTime">{{ formatDate(reminder.createdTime) }}</time></dd></div>
-          <div><dt>Напомнить</dt><dd>
+          <div><dt>Дедлайн</dt><dd>
             @if (reminder.dueDate) { <time [attr.datetime]="reminder.dueDate">{{ formatDate(reminder.dueDate) }}</time> }
             @else { <span class="empty-text">Без даты</span> }
           </dd></div>

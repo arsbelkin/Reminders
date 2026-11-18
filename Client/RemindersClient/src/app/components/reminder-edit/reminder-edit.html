@@ -40,22 +40,11 @@
         </div>
 
         <div class="form-field">
-          <label for="edit-reminder-category">Категория <span class="required-mark" aria-hidden="true">*</span></label>
-          <div class="select-field">
-            <select id="edit-reminder-category" formControlName="categoryId" aria-required="true"
-              [class.placeholder]="!form.controls.categoryId.value"
-              [attr.aria-invalid]="form.controls.categoryId.touched && form.controls.categoryId.invalid"
-              [attr.aria-describedby]="form.controls.categoryId.touched && form.controls.categoryId.invalid ? 'edit-reminder-category-error' : null">
-              <option value="" disabled>Выберите категорию</option>
-              @for (category of categories(); track category.id) {
-                @if (category.id) {
-                  <option [value]="category.id">{{ category.title || 'Без названия' }}</option>
-                }
-              }
-            </select>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
-          </div>
+          <label id="edit-reminder-category-label" for="edit-reminder-category">Категория <span class="required-mark" aria-hidden="true">*</span></label>
+          <app-select-field formControlName="categoryId" inputId="edit-reminder-category" [options]="categoryOptions()"
+            placeholder="Выберите категорию" [category]="true" [required]="true" [disabled]="isSaving() || categoriesLoading() || categoriesError()"
+            [invalid]="form.controls.categoryId.touched && form.controls.categoryId.invalid"
+            [describedBy]="form.controls.categoryId.touched && form.controls.categoryId.invalid ? 'edit-reminder-category-error' : null" />
           <p class="field-hint">При смене категории все участники напоминания должны входить в новую категорию.</p>
           @if (categories().length === 0) {
             <p class="field-hint">Сначала создайте категорию.</p>
@@ -73,19 +62,11 @@
 
         <div class="fields-row">
           <div class="form-field">
-            <label for="edit-reminder-priority">Приоритет</label>
-            <div class="select-field">
-              <select id="edit-reminder-priority" formControlName="priority">
-                @for (option of priorityOptions; track option.value) {
-                  <option [ngValue]="option.value">{{ option.label }}</option>
-                }
-              </select>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
-            </div>
+            <label id="edit-reminder-priority-label" for="edit-reminder-priority">Приоритет</label>
+            <app-select-field formControlName="priority" inputId="edit-reminder-priority" [options]="priorityOptions" [disabled]="isSaving() || categoriesLoading() || categoriesError()" />
           </div>
           <div class="form-field">
-            <label for="edit-reminder-due-date">Дата и время <span class="optional-label">Необязательно</span></label>
+            <label for="edit-reminder-due-date">Дедлайн <span class="optional-label">Необязательно</span></label>
             <input id="edit-reminder-due-date" type="datetime-local" formControlName="dueDate"
               [attr.aria-invalid]="form.controls.dueDate.touched && form.controls.dueDate.invalid"
               [attr.aria-describedby]="form.controls.dueDate.touched && form.controls.dueDate.invalid ? 'edit-reminder-date-error' : null" />
@@ -94,7 +75,7 @@
             }
           </div>
         </div>
-        <app-members-editor formControlName="usersEmails" inputId="reminder-edit-members" [categoryId]="form.controls.categoryId.value" [disabled]="isSaving()" />
+        <app-members-editor class="reminder-members" formControlName="usersEmails" inputId="reminder-edit-members" [categoryId]="form.controls.categoryId.value" [disabled]="isSaving()" />
       </fieldset>
       @if (errorMessage()) {
         <div class="form-error" role="alert">

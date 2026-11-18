@@ -19,10 +19,11 @@ import { CategoryListViewDto } from '../../api/models/category-list-view-dto';
 import { TokenStorageService } from '../../auth/token-storage.service';
 import { PRIORITY_LABELS } from '../../shared/reminder-labels';
 import { MembersEditor } from '../members-editor/members-editor';
+import { SelectField, SelectOption } from '../select-field/select-field';
 
 @Component({
   selector: 'app-reminder-edit',
-  imports: [ReactiveFormsModule, MembersEditor],
+  imports: [ReactiveFormsModule, MembersEditor, SelectField],
   templateUrl: './reminder-edit.html',
   styleUrls: [
     '../reminder-create/reminder-create.css',
@@ -42,6 +43,8 @@ export class ReminderEdit {
   readonly isSaving = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly categories = signal<CategoryListViewDto[]>([]);
+  readonly categoryOptions = computed<SelectOption[]>(() => this.categories()
+    .filter(category => !!category.id).map(category => ({value: category.id!, label: category.title || 'Без названия'})));
   readonly categoriesLoading = signal(false);
   readonly categoriesError = signal(false);
   private readonly target = signal<{
