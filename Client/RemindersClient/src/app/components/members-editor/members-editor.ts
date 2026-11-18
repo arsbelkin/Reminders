@@ -39,7 +39,7 @@ export class MembersEditor implements ControlValueAccessor, Validator {
   private readonly destroyRef = inject(DestroyRef);
   private readonly search = inject(UserSearchService);
   readonly inputId = input.required<string>();
-  // null: any registered user; string: participants of this category only.
+
   readonly categoryId = input<string | null>(null);
   readonly protectedEmail = input<string | null>(null);
   readonly disabled = input(false);
@@ -71,14 +71,17 @@ export class MembersEditor implements ControlValueAccessor, Validator {
       .sort((a, b) => (a.email ?? '').localeCompare(b.email ?? ''))
       .slice(0, 10),
   );
+
   readonly expanded = computed(
     () => this.focused() && !!this.draft().trim() && !this.searchDisabled(),
   );
+
   readonly outsideCategory = computed(() =>
     this.categoryId() && !this.loading() && !this.loadError()
       ? this.emails().filter((email) => !this.available().includes(email))
       : [],
   );
+
   private onChange: (emails: string[]) => void = () => {};
   private onTouched: () => void = () => {};
   private validatorChanged: () => void = () => {};
@@ -110,6 +113,7 @@ export class MembersEditor implements ControlValueAccessor, Validator {
         });
       onCleanup(() => request.unsubscribe());
     });
+
     effect((onCleanup) => {
       const categoryId = this.categoryId();
       this.reload();
@@ -142,18 +146,23 @@ export class MembersEditor implements ControlValueAccessor, Validator {
     this.draft.set('');
     this.results.set([]);
   }
+
   registerOnChange(fn: (emails: string[]) => void): void {
     this.onChange = fn;
   }
+
   registerOnTouched(fn: () => void): void {
     this.onTouched = fn;
   }
+
   setDisabledState(disabled: boolean): void {
     this.controlDisabled.set(disabled);
   }
+
   registerOnValidatorChange(fn: () => void): void {
     this.validatorChanged = fn;
   }
+
   validate(_control: AbstractControl): ValidationErrors | null {
     if (this.draft().trim()) return { memberDraft: true };
     if (this.emails().some((email) => !this.validEmail(email))) return { invalidMemberEmail: true };
@@ -170,6 +179,7 @@ export class MembersEditor implements ControlValueAccessor, Validator {
     this.focused.set(true);
     this.notifyValidation();
   }
+
   choose(user: UserInfoDto): void {
     const email = user.email;
     if (
@@ -182,10 +192,12 @@ export class MembersEditor implements ControlValueAccessor, Validator {
     this.draft.set('');
     this.update([...this.emails(), email]);
   }
+
   clearSearch(): void {
     this.draft.set('');
     this.notifyValidation();
   }
+
   onKeydown(event: KeyboardEvent): void {
     if (!['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(event.key)) return;
     event.preventDefault();
@@ -204,30 +216,36 @@ export class MembersEditor implements ControlValueAccessor, Validator {
         (index) => (index + (event.key === 'ArrowDown' ? 1 : -1) + length) % length,
       );
   }
+
   onFocusOut(event: FocusEvent): void {
     if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null))
       this.focused.set(false);
     this.onTouched();
   }
+
   remove(email: string): void {
     if (this.isDisabled() || email === this.protectedEmail()) return;
     this.update(this.emails().filter((item) => item !== email));
   }
+
   retrySearch(): void {
     this.searchVersion.update((value) => value + 1);
   }
   retry(): void {
     if (!this.isDisabled()) this.reload.update((value) => value + 1);
   }
+
   private update(emails: string[]): void {
     this.emails.set(emails);
     this.onChange([...emails]);
     this.onTouched();
     this.notifyValidation();
   }
+
   private validEmail(email: string): boolean {
     return !!email && Validators.email(new FormControl(email)) === null;
   }
+
   private notifyValidation(): void {
     untracked(() => this.validatorChanged());
   }

@@ -5,7 +5,7 @@ export class TokenStorageService {
   private readonly key = 'X-Access-Token';
   private readonly storedToken = signal(localStorage.getItem(this.key));
   readonly token = this.storedToken.asReadonly();
-  // Used only to adjust the UI; the API still checks token validity and ownership.
+
   private readonly claims = computed<Record<string, unknown> | null>(() => {
     const token = this.storedToken();
     if (!token) return null;
@@ -25,18 +25,18 @@ export class TokenStorageService {
       return null;
     }
   });
+
   readonly userId = computed(() => {
     const claims = this.claims();
-    const id =
-      claims?.['nameid'] ??
-      claims?.['sub'] ??
-      claims?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+    const id = claims?.['nameid'];
+
     return typeof id === 'string' && id.trim() ? id.trim().toLowerCase() : null;
   });
+
   readonly isAdmin = computed(() => {
     const claims = this.claims();
-    const role =
-      claims?.['role'] ?? claims?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+    const role = claims?.['role'];
+
     return role === 'Admin' || (Array.isArray(role) && role.includes('Admin'));
   });
 

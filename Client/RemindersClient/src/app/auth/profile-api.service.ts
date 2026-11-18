@@ -7,10 +7,12 @@ import { UserSearchService } from '../shared/user-search.service';
 import { TokenStorageService } from './token-storage.service';
 
 export type ProfileField = 'username' | 'email';
+
 export interface ProfileUpdate {
   username: string;
   email: string;
 }
+
 export interface ProfileAvailability {
   usernameAvailable?: boolean | null;
   emailAvailable?: boolean | null;
@@ -23,12 +25,10 @@ export class ProfileApiService {
   private readonly search = inject(UserSearchService);
   private readonly session = inject(TokenStorageService);
 
-  // Availability uses the existing generated search; only profile saving needs a separate call.
   checkAvailability(field: ProfileField, value: string) {
     const userId = this.session.userId();
     return this.search.find(field, value).pipe(
       map((users) => {
-        // Search returns substring matches. Only exact matches owned by another user are taken.
         const available = !users.some(
           (user) => user.id?.toLowerCase() !== userId && user[field] === value.trim(),
         );

@@ -20,6 +20,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const apiRequest = token
     ? request.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
     : request;
+
   const requestPath = request.url.slice(apiRoot.length).split(/[?#]/)[0].replace(/\/+$/, '');
   const isPublicAuthRequest = /^\/api\/v1\/auth\/(login|register)$/i.test(requestPath);
 
@@ -29,7 +30,6 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
         error instanceof HttpErrorResponse &&
         error.status === 401 &&
         !isPublicAuthRequest &&
-        // A late response from an old session must not clear a newly saved token.
         tokenStorage.getToken() === token
       ) {
         tokenStorage.clearToken();
